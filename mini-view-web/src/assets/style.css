@@ -1,0 +1,26 @@
+:root {
+  --primary-color: #861f11;
+  --secondary: #2c9042;
+  --accent: #aa612e;
+  --hightlight: #85a28b;
+  --hightlight2: #e4bd62;
+  --shade: #63322d;
+  --darker: #1e1e1e;
+  --background: #303030;
+}
+
+html {
+  font-family: 'Play', 'Source Sans Pro', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  color: white;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.org-section-number {
+  display: none;
+}
