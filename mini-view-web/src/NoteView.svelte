@@ -1,42 +1,46 @@
 <script lang="ts">
   import Clock from './Clock.svelte'
-  import * as org from 'org'
   import axios from 'axios'
   import {onMount} from 'svelte'
 
-  let text =""
+  let text = ''
+  let isLoading = false
   const getNote = async () => {
-    const {data} = await axios.get('https://mini-view.firebaseio.com/note.json')
-    console.log(data)
+    isLoading = true
+    try {
+      const server = import.meta.env.VITE_SERVER
+      const {data} = await axios.get(server + '/note-or-inspire')
+      text = data.content
+    } catch (err) {
+      console.error('Error getting daily note', err)
+    } finally {
+      isLoading = false
+    }
+  }
+
+  let isSmallClock = false
+  const toggleSmallClock = () => {
+    isSmallClock = !isSmallClock
   }
 
   onMount(() => {
     getNote()
   })
-
-  let parser = new org.Parser()
-  $: orgHTMLDocument = () => {
-    let _text = text
-      .split('\n')
-      .map(x => x.replace(/^:.*$/, ''))
-      .join('\n')
-      .replaceAll(/\n\s*\n/g, '\n')
-    let orgDocument = parser.parse(_text)
-    return orgDocument.convert(org.ConverterHTML, {
-      headerOffset: 1,
-      exportFromLineNumber: false,
-      suppressSubScriptHandling: false,
-      suppressAutoLink: false,
-      htmlClassPrefix: 'org-',
-    })
-  }
 </script>
 
 <div class="container">
-  <div class="clock">
+  <div
+    class="clock"
+    style:background-color={isLoading ? 'var(--background)' : 'var(--darker)'}
+    style:width={isSmallClock ? '12rem' : '18rem'}
+  >
     <Clock />
   </div>
-  <div class="text">{@html orgHTMLDocument()?.contentHTML}</div>
+  <div class="text">{@html text}</div>
+  <div class="buttons">
+    <button on:click={() => getNote()}>Load</button>
+    <button on:click={() => toggleSmallClock()}>Small</button>
+  </div>
 </div>
 
 <style>
@@ -48,13 +52,20 @@
     position: fixed;
     top: 0.5rem;
     right: 0.5rem;
-    width: 18rem;
-    background-color: var(--darker);
   }
   .text {
+    white-space: pre;
     white-space: break-spaces;
     font-size: 1.2rem;
     padding: 1rem 1rem;
     overflow-y: scroll;
+  }
+  .buttons {
+    position: fixed;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-gap: 1rem;
   }
 </style>

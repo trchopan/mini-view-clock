@@ -1,5 +1,5 @@
 :root {
-  --primary-color: #861f11;
+  --primary: #861f11;
   --secondary: #2c9042;
   --accent: #aa612e;
   --hightlight: #85a28b;
@@ -7,6 +7,11 @@
   --shade: #63322d;
   --darker: #1e1e1e;
   --background: #303030;
+  --pad-1: 1.5rem;
+  --pad-2: 2.5rem;
+  --pad-3: 3.5rem;
+  --pad-4: 4.5rem;
+  --pad-5: 5.5rem;
 }
 
 html {
@@ -18,9 +23,77 @@ html {
 
 a {
   text-decoration: none;
-  color: inherit;
+  color: var(--secondary);
 }
 
 .org-section-number {
   display: none;
+}
+
+button {
+  background: var(--darker);
+  color: white;
+  border: none;
+  padding: 0.3rem 0.5rem;
+}
+
+
+.org-h1,
+.org-h2,
+.org-h3,
+.org-h4,
+.org-h5 {
+  margin-top: 1.68rem;
+  margin-bottom: 0.5rem;
+}
+
+.org-h1 {
+  color: var(--primary);
+}
+
+.org-h2 {
+  padding-left: var(--pad-1);
+  color: var(--secondary);
+}
+
+.org-h3 {
+  padding-left: var(--pad-2);
+  color: var(--accent);
+}
+
+.org-h4 {
+  padding-left: var(--pad-3);
+  color: var(--primary);
+  font-size: 1.33em;
+}
+
+.org-h5 {
+  padding-left: var(--pad-4);
+  color: var(--secondary);
+  font-size: 1.33em;
+}
+
+.org-p1,
+.org-p2,
+.org-p3,
+.org-p4,
+.org-p5 {
+  margin-top: 0.68rem;
+  margin-bottom: 0.68rem;
+}
+
+.org-p2 {
+  padding-left: var(--pad-1);
+}
+
+.org-p3 {
+  padding-left: var(--pad-2);
+}
+
+.org-p4 {
+  padding-left: var(--pad-3);
+}
+
+.org-p5 {
+  padding-left: var(--pad-4);
 }

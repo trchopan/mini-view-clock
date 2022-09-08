@@ -19,9 +19,8 @@ impl NoteRepo {
             .await
             .map(|q| {
                 let quote = q.first().unwrap();
-                Note {
-                    content: format!("* {}\n{}", quote.a, quote.q),
-                }
+                let content = format!("* {}\n{}", quote.a, quote.q);
+                Note::from_org_to_html(content)
             })
             .map_err(|err| err.into())
     }
@@ -34,9 +33,7 @@ impl NoteRepo {
         note_path.push(today_str.to_string());
         note_path.set_extension("org");
         fs::read_to_string(note_path)
-            .map(|f| Note {
-                content: f.to_string(),
-            })
+            .map(|f| Note::from_org_to_html(f.to_string()))
             .map_err(|err| {
                 debug!("Error read daily note file: {:?}", err);
                 MyAppError::NotFound

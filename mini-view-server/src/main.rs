@@ -8,8 +8,8 @@ use mini_view_server::{application::get_note_or_inspire, infrastructure::NoteRep
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
-    /// The serving addr for the server. Default: 0.0.0.0
-    #[clap(long, value_parser, default_value = "0.0.0.0")]
+    /// The serving addr for the server. Default: 127.0.0.1
+    #[clap(long, value_parser, default_value = "127.0.0.1")]
     addr: String,
 
     /// The port for the server. Default: 5001

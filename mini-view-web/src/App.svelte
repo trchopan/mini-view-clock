@@ -56,12 +56,6 @@
     top: 0.1rem;
     left: 0.1rem;
   }
-  button {
-    background: var(--darker);
-    color: white;
-    border: none;
-    padding: 0.3rem 0.5rem;
-  }
   ul {
     padding: 0.5rem;
     margin: 0;
@@ -71,6 +65,6 @@
   ul > li {
     list-style: none;
     padding: 0.5rem;
-    border-bottom: solid 1px var(--primary-color);
+    border-bottom: solid 1px var(--primary);
   }
 </style>
