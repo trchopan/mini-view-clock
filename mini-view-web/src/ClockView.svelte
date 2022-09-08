@@ -1,25 +1,14 @@
 <script lang="ts">
   import {onMount, onDestroy} from 'svelte'
-  import {sample} from 'lodash'
   import Clock from './Clock.svelte'
 
   let widthPadding = 0
 
-  const colors = [
-    //
-    '#f4b78d',
-    '#85a28b',
-    '#e4bd6',
-    '#d4d4bd',
-    '#d6d4ff',
-  ]
-  let clockColor = sample(colors)
   let interval = null;
 
   onMount(async () => {
     interval = setInterval(() => {
       widthPadding = Math.random() * 5 + 0.5
-      clockColor = sample(colors)
     }, import.meta.env.VITE_CLOCK_PADDING_INTERVAL * 1000)
   })
 
@@ -36,7 +25,7 @@
 
 <div class="clock">
   <div style={clockStyle()}>
-    <Clock color={clockColor} />
+    <Clock color="#e4bd6" />
   </div>
 </div>
 
