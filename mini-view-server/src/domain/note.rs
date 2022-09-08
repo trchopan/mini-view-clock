@@ -1,9 +1,21 @@
+use lazy_static::lazy_static;
 use org::Org;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Note {
     pub content: String,
+}
+
+fn clean_id_str(content: &String) -> String {
+    lazy_static! {
+        static ref ORG_LINK_REGEX: Regex =
+            Regex::new(r"\[\[(?P<link>.*)\]\[(?P<text>.*)\]\]").unwrap();
+    }
+    ORG_LINK_REGEX
+        .replace_all(content, "<b class=\"org-bold\">$text</b>")
+        .to_string()
 }
 
 fn org_to_html(org: &Vec<Org>) -> Vec<String> {
@@ -30,7 +42,11 @@ fn org_to_html(org: &Vec<Org>) -> Vec<String> {
                     })
                     .collect();
                 let content = content.join("");
-                [vec![heading, content], org_to_html(sub.subtrees_as_ref())].concat()
+                let output: Vec<String> = vec![heading, content]
+                    .iter()
+                    .map(|s| clean_id_str(s))
+                    .collect();
+                [output, org_to_html(sub.subtrees_as_ref())].concat()
             })
             .flatten()
             .collect()
@@ -60,5 +76,25 @@ impl Note {
             Err(_) => todo!(),
         };
         Self { content }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::clean_id_str;
+
+    #[test]
+    fn can_clean_id_str() {
+        let sample = "aaa [[id:123456-78abc][My String]]ccc";
+        assert_eq!(
+            clean_id_str(&sample.to_string()),
+            "aaa <b class=\"org-bold\">My String</b>ccc"
+        );
+
+        let sample = "bbb [[https://www.example.com][Example String]] ddd";
+        assert_eq!(
+            clean_id_str(&sample.to_string()),
+            "bbb <b class=\"org-bold\">Example String</b> ddd"
+        );
     }
 }
