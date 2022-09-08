@@ -9,16 +9,13 @@
   let interval = null
 
   let showCoins = false
-  const toggleShowCoins = () => {
-    showCoins = !showCoins
-  }
-
   let coinInfo: {
     id: string
     name: string
     usd: number
     usd_24h_change: number
   }[] = []
+
   const getCoins = async () => {
     if (!showCoins) return
 
@@ -50,6 +47,13 @@
     }
     const {data} = await promises()
     coinInfo = coins.map(coin => ({...coin, ...data[coin.id]}))
+  }
+
+  const toggleShowCoins = () => {
+    showCoins = !showCoins
+    if (showCoins) {
+      getCoins()
+    }
   }
 
   onMount(async () => {
