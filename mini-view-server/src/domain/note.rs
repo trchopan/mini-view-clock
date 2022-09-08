@@ -11,8 +11,9 @@ pub struct Note {
 fn clean_id_str(content: &String) -> String {
     lazy_static! {
         static ref ORG_LINK_REGEX: Regex =
-            Regex::new(r"\[\[(?P<link>.*)\]\[(?P<text>.*)\]\]").unwrap();
+            Regex::new(r"\[\[(?P<link>.*?)\]\[(?P<text>.*?)\]\]").unwrap();
     }
+    println!("{:?}", content);
     ORG_LINK_REGEX
         .replace_all(content, "<b class=\"org-bold\">$text</b>")
         .to_string()
@@ -91,10 +92,10 @@ mod tests {
             "aaa <b class=\"org-bold\">My String</b>ccc"
         );
 
-        let sample = "bbb [[https://www.example.com][Example String]] ddd";
+        let sample = "bbb [[https://mini-view.web.app/][mini-view.web.app]] ddd aaa [[id:123456-78abc][My String]]ccc";
         assert_eq!(
             clean_id_str(&sample.to_string()),
-            "bbb <b class=\"org-bold\">Example String</b> ddd"
+            "bbb <b class=\"org-bold\">mini-view.web.app</b> ddd aaa <b class=\"org-bold\">My String</b>ccc"
         );
     }
 }
