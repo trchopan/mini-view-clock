@@ -13,7 +13,6 @@ fn clean_id_str(content: &String) -> String {
         static ref ORG_LINK_REGEX: Regex =
             Regex::new(r"\[\[(?P<link>.*?)\]\[(?P<text>.*?)\]\]").unwrap();
     }
-    println!("{:?}", content);
     ORG_LINK_REGEX
         .replace_all(content, "<b class=\"org-bold\">$text</b>")
         .to_string()
