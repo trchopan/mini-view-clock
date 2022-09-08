@@ -25,7 +25,7 @@
 
 <div class="clock">
   <div style={clockStyle()}>
-    <Clock color="#e4bd6" />
+    <Clock />
   </div>
 </div>
 

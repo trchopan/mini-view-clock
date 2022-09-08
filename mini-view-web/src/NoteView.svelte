@@ -57,7 +57,7 @@
     white-space: pre;
     white-space: break-spaces;
     font-size: 1.2rem;
-    padding: 1rem 1rem;
+    padding: 5rem 1rem;
     overflow-y: scroll;
   }
   .buttons {

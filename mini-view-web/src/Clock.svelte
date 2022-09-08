@@ -2,8 +2,6 @@
   import {onDestroy, onMount} from 'svelte'
   import {format} from 'date-fns'
 
-  export let color: string | undefined = undefined
-
   let dateStr = ''
   let timeStr = ''
   let secondStr = ''
@@ -53,7 +51,7 @@
       font-style="normal"
       font-weight="normal"
       style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; opacity: 1; white-space: pre;"
-      style:fill={color || 'white'}
+      style:fill="white"
       class="time"
     >
       <tspan x="-76.49" y="18.85">{timeStr}</tspan>
@@ -67,7 +65,7 @@
       font-style="normal"
       font-weight="normal"
       style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; opacity: 1; white-space: pre;"
-      style:fill={color || 'white'}
+      style:fill="white"
       class="time-second"
     >
       <tspan x="-10.29" y="5.65">{secondStr}</tspan>
