@@ -96,7 +96,7 @@
     </div>
   {/if}
   <div class="buttons">
-    <button on:click={() => toggleShowCoins()}> Coins </button>
+    <button on:click={() => toggleShowCoins()}>Coins</button>
   </div>
 </div>
 
@@ -123,7 +123,7 @@
   }
   .buttons {
     position: fixed;
-    bottom: 0.5rem;
+    top: 0.5rem;
     right: 0.5rem;
     display: grid;
     grid-template-columns: 1fr;
