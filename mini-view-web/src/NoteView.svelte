@@ -39,7 +39,9 @@
   <div class="text">{@html text}</div>
   <div class="buttons">
     <button on:click={() => getNote()}>Load</button>
-    <button on:click={() => toggleSmallClock()}>Small</button>
+    <button on:click={() => toggleSmallClock()}>
+      {isSmallClock ? 'Big' : 'Small'}
+    </button>
   </div>
 </div>
 
