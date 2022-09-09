@@ -8,7 +8,7 @@
   let widthPadding = 0
   let interval = null
 
-  let showCoins = false
+  let showCoins = true
   let coinInfo: {
     id: string
     name: string
