@@ -9,3 +9,8 @@ pub struct ZenQuoteElement {
     pub h: String,
 }
 
+impl ZenQuoteElement {
+    pub fn to_org(&self) -> String {
+        format!("* {}\n{}", self.a, self.q)
+    }
+}

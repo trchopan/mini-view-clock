@@ -19,8 +19,7 @@ impl NoteRepo {
             .await
             .map(|q| {
                 let quote = q.first().unwrap();
-                let content = format!("* {}\n{}", quote.a, quote.q);
-                Note::from_org_to_html(content)
+                Note::from_org_to_html(quote.to_org())
             })
             .map_err(|err| err.into())
     }
