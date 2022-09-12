@@ -57,6 +57,7 @@
   }
 
   onMount(async () => {
+    getCoins()
     interval = setInterval(() => {
       widthPadding = Math.random() * 5 + 0.5
       getCoins()
