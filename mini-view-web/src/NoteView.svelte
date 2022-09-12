@@ -1,7 +1,7 @@
 <script lang="ts">
   import Clock from './Clock.svelte'
   import axios from 'axios'
-  import {onMount} from 'svelte'
+  import {onDestroy, onMount} from 'svelte'
 
   let text = ''
   let isLoading = false
@@ -23,9 +23,24 @@
     isSmallClock = !isSmallClock
   }
 
-  onMount(() => {
+  let interval = []
+  onMount(async () => {
     getNote()
+    interval = [
+      {
+        fn: () => {
+          getNote()
+        },
+        interval: import.meta.env.VITE_NOTE_REFRESH_INTERVAL * 1000,
+      },
+    ].map(i => setInterval(i.fn, i.interval))
   })
+
+  onDestroy(() => {
+    interval.forEach(i => clearInterval(i))
+  })
+
+  onMount(() => {})
 </script>
 
 <div class="container">

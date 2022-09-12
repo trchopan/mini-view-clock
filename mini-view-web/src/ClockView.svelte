@@ -6,7 +6,6 @@
   import {fmtNumber, fmtPercent} from './helpers'
 
   let widthPadding = 0
-  let interval = null
 
   let showCoins = true
   let coinInfo: {
@@ -56,18 +55,27 @@
     }
   }
 
+  let interval = []
   onMount(async () => {
     getCoins()
-    interval = setInterval(() => {
-      widthPadding = Math.random() * 5 + 0.5
-      getCoins()
-    }, import.meta.env.VITE_CLOCK_REFRESH_INTERVAL * 1000)
+    interval = [
+      {
+        fn: () => {
+          widthPadding = Math.random() * 5 + 0.5
+        },
+        interval: import.meta.env.VITE_CLOCK_PADDING_INTERVAL * 1000,
+      },
+      {
+        fn: () => {
+          getCoins()
+        },
+        interval: import.meta.env.VITE_COIN_REFRESH_INTERVAL * 1000,
+      },
+    ].map(i => setInterval(i.fn, i.interval))
   })
 
   onDestroy(() => {
-    if (interval) {
-      clearInterval(interval)
-    }
+    interval.forEach(i => clearInterval(i))
   })
 
   $: clockStyle = () => {
