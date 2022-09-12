@@ -1,7 +1,8 @@
-use crate::domain::{MyAppError, Note, ZenQuote};
+use crate::domain::{Note, ZenQuote};
+use actix_web::{error, Error};
 use chrono::Utc;
 use std::fs;
-use tracing::debug;
+use tracing::{debug, error};
 
 pub struct NoteRepo {
     note_path: std::path::PathBuf,
@@ -12,19 +13,26 @@ impl NoteRepo {
         Self { note_path }
     }
 
-    pub async fn get_inspire_quote(&self) -> Result<Note, MyAppError> {
-        reqwest::get("https://zenquotes.io/api/today")
-            .await?
+    pub async fn get_inspire_quote(&self) -> Result<Note, Error> {
+        let err_fn = |err: reqwest::Error| {
+            error!("request zenquotes.io: {}", err);
+            error::ErrorInternalServerError("error request zenquotes.io")
+        };
+
+        let resp = reqwest::get("https://zenquotes.io/api/today")
+            .await
+            .map_err(|err| err_fn(err));
+        resp?
             .json::<ZenQuote>()
             .await
             .map(|q| {
                 let quote = q.first().unwrap();
                 Note::from_org_to_html(quote.to_org())
             })
-            .map_err(|err| err.into())
+            .map_err(|err| err_fn(err))
     }
 
-    pub fn get_note(&self) -> Result<Note, MyAppError> {
+    pub fn get_note(&self) -> Result<Note, Error> {
         let now = Utc::now();
         let today_str = now.format("%Y-%m-%d");
         let mut note_path = std::path::PathBuf::new();
@@ -35,7 +43,7 @@ impl NoteRepo {
             .map(|f| Note::from_org_to_html(f.to_string()))
             .map_err(|err| {
                 debug!("Error read daily note file: {:?}", err);
-                MyAppError::NotFound
+                error::ErrorNotFound("not found daily note file")
             })
     }
 }

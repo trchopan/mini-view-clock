@@ -1,8 +1,14 @@
+use std::sync::{atomic::AtomicUsize, Arc};
+
+use actix::Actor;
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use clap::Parser;
 use env_logger::Env;
-use mini_view_server::{application::get_note_or_inspire, infrastructure::NoteRepo};
+use mini_view_server::{
+    application::{command_test, get_note_or_inspire, ws_command, CommandServer},
+    infrastructure::NoteRepo,
+};
 
 /// Server to serve the mini-view-web
 #[derive(Parser, Debug)]
@@ -30,11 +36,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let note_repo = web::Data::new(NoteRepo::new(args.note_path));
 
+    let visitor_count = Arc::new(AtomicUsize::new(0));
+    let command_server = CommandServer::new(visitor_count.clone()).start();
+
     let server = HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
             .wrap(Cors::permissive())
             .app_data(note_repo.clone())
+            .app_data(web::Data::from(visitor_count.clone()))
+            .app_data(web::Data::new(command_server.clone()))
             .configure(routes)
     })
     .bind((args.addr, args.port))?
@@ -50,6 +61,12 @@ fn routes(cfg: &mut web::ServiceConfig) {
         web::scope("")
             //
             // Get Daily Org note
-            .route("/note-or-inspire", web::get().to(get_note_or_inspire)),
+            .route("/note-or-inspire", web::get().to(get_note_or_inspire))
+            //
+            //
+            .route("/ws_command", web::get().to(ws_command))
+            //
+            //
+            .route("/command/view/{view}", web::put().to(command_test)),
     );
 }

@@ -2,30 +2,26 @@
   import ClockView from './ClockView.svelte'
   import MenuIcon from './MenuIcon.svelte'
   import NoteView from './NoteView.svelte'
+  import {currentView} from './store'
+  import {View} from './types'
 
   let showMenu = false
-  enum View {
-    Clock = 'Clock',
-    Note = 'Note',
-  }
-
-  let currentView = View.Clock
 
   const toggleMenu = () => {
     showMenu = !showMenu
   }
 
   const selectView = (view: View) => {
-    currentView = view
+    currentView.set(view)
     showMenu = false
   }
 </script>
 
 <main>
   <div class="view-container">
-    {#if currentView == View.Clock}
+    {#if $currentView == View.Clock}
       <ClockView />
-    {:else if currentView == View.Note}
+    {:else if $currentView == View.Note}
       <NoteView />
     {/if}
   </div>

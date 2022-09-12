@@ -74,7 +74,7 @@
   }
 </script>
 
-<div class="clock">
+<div class="clock-container">
   <div style={clockStyle()}>
     <Clock />
   </div>
@@ -101,7 +101,7 @@
 </div>
 
 <style>
-  .clock {
+  .clock-container {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -110,6 +110,7 @@
     position: fixed;
     left: 0.5rem;
     bottom: 0.5rem;
+    right: 0.5rem;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     grid-row-gap: 0.3rem;
