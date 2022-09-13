@@ -90,7 +90,8 @@
   .headers {
     position: fixed;
     right: 0.5rem;
-    top: 12rem;
+    top: 8.6rem;
+    bottom: 3rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -99,6 +100,7 @@
     width: calc(100vw / 4.2);
     color: var(--secondary);
     line-height: 1.2rem;
+    overflow-y: scroll;
   }
   .buttons {
     position: fixed;
