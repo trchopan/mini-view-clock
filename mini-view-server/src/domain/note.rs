@@ -25,9 +25,9 @@ fn org_to_html(org: &Vec<Org>) -> Vec<String> {
         org.iter()
             .map(|sub| {
                 let heading = format!(
-                    "<h{depth} class=\"org-h{depth}\">{content}</h{depth}>",
+                    "<h{depth} id=\"org-h{content}\" class=\"org-h{depth}\">{content}</h{depth}>",
                     depth = sub.depth() + 1,
-                    content = sub.heading()
+                    content = sub.heading(),
                 );
                 let content: Vec<String> = sub
                     .content_as_ref()

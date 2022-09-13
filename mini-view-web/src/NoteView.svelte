@@ -18,6 +18,21 @@
     }
   }
 
+  $: headers = () => {
+    const doc = document.createElement('html')
+    doc.innerHTML = text
+    const h = doc.getElementsByTagName('h2')
+    const children = []
+    for (let i = 0; i < h.length; i++) {
+      const child = h.item(i)
+      children.push({
+        id: child.id,
+        text: child.innerText,
+      })
+    }
+    return children
+  }
+
   let interval = []
   onMount(async () => {
     getNote()
@@ -44,12 +59,17 @@
     <Clock />
   </div>
   <div class="text">{@html text}</div>
+  <div class="headers">
+    {#each headers() as header}
+      <a href={`#${header.id}`}>{header.text}</a>
+    {/each}
+  </div>
   <div class="buttons">
     <button on:click={() => getNote()}>Load</button>
   </div>
 </div>
 
-<style>
+<style lang="scss">
   .container {
     display: grid;
     grid-template-columns: 3.5fr 1fr;
@@ -64,8 +84,21 @@
     white-space: pre;
     white-space: break-spaces;
     font-size: 1.2rem;
-    padding: 5rem 1rem;
+    padding: 5rem 1rem 20rem;
     overflow-y: scroll;
+  }
+  .headers {
+    position: fixed;
+    right: 0.5rem;
+    top: 12rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: end;
+    justify-content: start;
+    width: calc(100vw / 4.2);
+    color: var(--secondary);
+    line-height: 1.2rem;
   }
   .buttons {
     position: fixed;
