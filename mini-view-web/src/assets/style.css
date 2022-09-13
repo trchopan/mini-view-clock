@@ -21,6 +21,29 @@ html {
   color: white;
 }
 
+/* Works on Firefox */
+* {
+  scrollbar-width: 2px;
+  scrollbar-height: 2px;
+  scrollbar-color: var(--primary) var(--background);
+}
+
+/* Works on Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: 0px;
+  border: 1px solid var(--background);
+}
+
 a {
   text-decoration: none;
   color: var(--secondary);
