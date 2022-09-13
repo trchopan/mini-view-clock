@@ -5,9 +5,6 @@
   import Clock from './Clock.svelte'
   import {fmtNumber, fmtPercent} from './helpers'
 
-  let widthPadding = 0
-
-  let showCoins = true
   let coinInfo: {
     id: string
     name: string
@@ -16,8 +13,6 @@
   }[] = []
 
   const getCoins = async () => {
-    if (!showCoins) return
-
     let coins = [
       {id: 'bitcoin', name: 'BTC'},
       {id: 'ethereum', name: 'ETH'},
@@ -48,11 +43,9 @@
     coinInfo = coins.map(coin => ({...coin, ...data[coin.id]}))
   }
 
-  const toggleShowCoins = () => {
-    showCoins = !showCoins
-    if (showCoins) {
-      getCoins()
-    }
+  let widthPadding = 0
+  $: clockStyle = () => {
+    return `width: calc(100vw - ${widthPadding}rem);`
   }
 
   let interval = []
@@ -77,35 +70,29 @@
   onDestroy(() => {
     interval.forEach(i => clearInterval(i))
   })
-
-  $: clockStyle = () => {
-    return `width: calc(100vw - ${widthPadding}rem);`
-  }
 </script>
 
 <div class="clock-container">
   <div style={clockStyle()}>
     <Clock />
   </div>
-  {#if showCoins}
-    <div class="coins">
-      {#each coinInfo as coin}
-        <div class="coin">
-          <span>{coin.name}:</span>
-          <span>{fmtNumber(coin.usd)}</span>
-          <span
-            style:color={coin.usd_24h_change > 0
-              ? 'var(--secondary)'
-              : 'var(--primary)'}
-          >
-            {fmtPercent(coin.usd_24h_change)}
-          </span>
-        </div>
-      {/each}
-    </div>
-  {/if}
+  <div class="coins">
+    {#each coinInfo as coin}
+      <div class="coin">
+        <span>{coin.name}:</span>
+        <span>{fmtNumber(coin.usd)}</span>
+        <span
+          style:color={coin.usd_24h_change > 0
+            ? 'var(--secondary)'
+            : 'var(--primary)'}
+        >
+          {fmtPercent(coin.usd_24h_change)}
+        </span>
+      </div>
+    {/each}
+  </div>
   <div class="buttons">
-    <button on:click={() => toggleShowCoins()}>Coins</button>
+    <button on:click={() => getCoins()}>Coins</button>
   </div>
 </div>
 

@@ -18,11 +18,6 @@
     }
   }
 
-  let isSmallClock = false
-  const toggleSmallClock = () => {
-    isSmallClock = !isSmallClock
-  }
-
   let interval = []
   onMount(async () => {
     getNote()
@@ -39,24 +34,18 @@
   onDestroy(() => {
     interval.forEach(i => clearInterval(i))
   })
-
-  onMount(() => {})
 </script>
 
 <div class="container">
   <div
     class="clock"
     style:background-color={isLoading ? 'var(--background)' : 'var(--darker)'}
-    style:width={isSmallClock ? '12rem' : '18rem'}
   >
     <Clock />
   </div>
   <div class="text">{@html text}</div>
   <div class="buttons">
     <button on:click={() => getNote()}>Load</button>
-    <button on:click={() => toggleSmallClock()}>
-      {isSmallClock ? 'Big' : 'Small'}
-    </button>
   </div>
 </div>
 
@@ -69,6 +58,7 @@
     position: fixed;
     top: 0.5rem;
     right: 0.5rem;
+    width: calc(100vw / 3.6);
   }
   .text {
     white-space: pre;

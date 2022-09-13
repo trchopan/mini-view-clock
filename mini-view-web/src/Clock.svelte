@@ -75,7 +75,7 @@
 
 <style>
   .date {
-    fill: #545454;
+    fill: #686868;
   }
   text {
     font-family: 'Play', sans-serif;
