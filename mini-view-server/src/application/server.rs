@@ -77,7 +77,7 @@ impl Handler<Connect> for CommandServer {
     type Result = usize;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
-        println!("Ws client connected");
+        debug!("Ws client connected");
 
         // register session with random id
         let id = self.rng.gen::<usize>();
@@ -96,7 +96,7 @@ impl Handler<Disconnect> for CommandServer {
     type Result = ();
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
-        println!("Someone disconnected");
+        debug!("Someone disconnected");
 
         match self.sessions.remove(&msg.id) {
             Some(e) => debug!("disconnect done {:?}", e),

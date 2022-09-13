@@ -2,7 +2,7 @@ use std::time::{Duration, Instant};
 
 use actix::prelude::*;
 use actix_web_actors::ws;
-use tracing::debug;
+use tracing::{debug, info};
 
 use super::server;
 
@@ -34,7 +34,7 @@ impl WsCommandSession {
             // check client heartbeats
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
                 // heartbeat timed out
-                println!("Websocket Client heartbeat failed, disconnecting!");
+                debug!("Websocket Client heartbeat failed, disconnecting!");
 
                 // notify Command server
                 act.addr.do_send(server::Disconnect { id: act.id });
@@ -123,7 +123,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsCommandSession 
                 let m = text.trim();
                 debug!(">>> message text: {:?}", m);
             }
-            ws::Message::Binary(_) => println!("Unexpected binary"),
+            ws::Message::Binary(_) => info!("Unexpected binary"),
             ws::Message::Close(reason) => {
                 ctx.close(reason);
                 ctx.stop();
