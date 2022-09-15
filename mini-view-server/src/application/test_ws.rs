@@ -25,16 +25,17 @@ pub async fn ws_command(
     )
 }
 
-// #[put("/command/view/{line_id}")]
+// PUT /command/view/{view}
 pub async fn command_test(
     srv: web::Data<Addr<CommandServer>>,
     view: web::Path<String>,
 ) -> Result<HttpResponse, Error> {
     let view = View::try_from(view.to_string())?;
-    if let Err(err) = srv.send(CmdChangeView { view }).await {
-        debug!("command_test err: {:?}", err);
-        Err(ErrorInternalServerError(err))
-    } else {
-        Ok(HttpResponse::new(StatusCode::OK))
+    match srv.send(CmdChangeView { view }).await {
+        Err(err) => {
+            debug!("command_test err: {:?}", err);
+            Err(ErrorInternalServerError(err))
+        }
+        Ok(_) => Ok(HttpResponse::new(StatusCode::OK)),
     }
 }
