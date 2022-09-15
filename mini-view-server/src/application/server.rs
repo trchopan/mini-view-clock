@@ -98,10 +98,7 @@ impl Handler<Disconnect> for CommandServer {
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
         debug!("Someone disconnected");
 
-        match self.sessions.remove(&msg.id) {
-            Some(e) => debug!("disconnect done {:?}", e),
-            None => todo!(),
-        }
+        self.sessions.remove(&msg.id);
     }
 }
 
