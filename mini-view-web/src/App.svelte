@@ -1,9 +1,16 @@
 <script lang="ts">
+  import About from './About.svelte'
   import ClockView from './ClockView.svelte'
   import MenuIcon from './MenuIcon.svelte'
   import NoteView from './NoteView.svelte'
   import {currentView} from './store'
   import {View} from './types'
+
+  const routes = [
+    {component: ClockView, text: View.Clock},
+    {component: NoteView, text: View.Note},
+    {component: About, text: View.About},
+  ]
 
   let showMenu = false
 
@@ -19,11 +26,11 @@
 
 <main>
   <div class="view-container">
-    {#if $currentView == View.Clock}
-      <ClockView />
-    {:else if $currentView == View.Note}
-      <NoteView />
-    {/if}
+    {#each routes as route}
+      {#if $currentView == route.text}
+        <svelte:component this={route.component} />
+      {/if}
+    {/each}
   </div>
   <nav>
     <button on:click={() => toggleMenu()}>
@@ -31,8 +38,9 @@
     </button>
     {#if showMenu}
       <ul>
-        <li on:click={() => selectView(View.Clock)}>Clock</li>
-        <li on:click={() => selectView(View.Note)}>Note</li>
+        {#each routes as route}
+          <li on:click={() => selectView(route.text)}>{route.text}</li>
+        {/each}
       </ul>
     {/if}
   </nav>
