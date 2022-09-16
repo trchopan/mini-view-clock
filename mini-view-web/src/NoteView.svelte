@@ -61,7 +61,7 @@
   <div class="text">{@html text}</div>
   <div class="headers">
     {#each headers() as header}
-      <a href={`#${header.id}`}>{header.text}</a>
+      <p><a href={`#${header.id}`}>{header.text}</a></p>
     {/each}
   </div>
   <div class="buttons">
@@ -72,7 +72,7 @@
 <style lang="scss">
   .container {
     display: grid;
-    grid-template-columns: 3.5fr 1fr;
+    grid-template-columns: 2.5fr 1fr;
   }
   .clock {
     position: fixed;
@@ -84,20 +84,15 @@
     white-space: pre;
     white-space: break-spaces;
     font-size: 1.2rem;
-    padding: 5rem 1rem 20rem;
+    padding: 5rem 0.5rem 20rem 1rem;
     overflow-y: scroll;
   }
   .headers {
     position: fixed;
     right: 0.5rem;
-    top: 8.6rem;
+    top: 10rem;
     bottom: 3rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    align-items: end;
-    justify-content: start;
-    width: calc(100vw / 4.2);
+    width: calc(100vw / 3.6);
     color: var(--secondary);
     line-height: 1.2rem;
     overflow-y: scroll;
