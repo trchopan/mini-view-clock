@@ -90,7 +90,7 @@
   .headers {
     position: fixed;
     right: 0.5rem;
-    top: 10rem;
+    top: calc(0.5rem + (100vw / 3.6) * 104 / 215);
     bottom: 3rem;
     width: calc(100vw / 3.6);
     color: var(--secondary);
