@@ -32,15 +32,19 @@ impl NoteRepo {
             .map_err(|err| err_fn(err))
     }
 
-    pub fn get_note(&self) -> Result<Note, Error> {
+    fn get_today_note_path(&self) -> std::path::PathBuf {
         let now = Utc::now();
         let today_str = now.format("%Y-%m-%d");
-        let mut note_path = std::path::PathBuf::new();
-        note_path.push(self.note_path.clone());
+        let mut note_path = self.note_path.clone();
         note_path.push(today_str.to_string());
         note_path.set_extension("org");
+        note_path
+    }
+
+    pub fn get_note(&self) -> Result<Note, Error> {
+        let note_path = self.get_today_note_path();
         fs::read_to_string(note_path)
-            .map(|f| Note::from_org_to_html(f.to_string()))
+            .map(|org_string| Note::from_org_to_html(org_string))
             .map_err(|err| {
                 debug!("Error read daily note file: {:?}", err);
                 error::ErrorNotFound("not found daily note file")
