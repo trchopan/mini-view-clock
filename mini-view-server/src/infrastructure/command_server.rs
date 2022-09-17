@@ -1,7 +1,3 @@
-//! `CommandServer` is an actor. It maintains list of connection client session.
-//! And manages available rooms. Peers send messages to other peers in same
-//! room through `CommandServer`.
-
 use std::{
     collections::HashMap,
     sync::{
@@ -11,9 +7,10 @@ use std::{
 };
 
 use actix::prelude::*;
-use actix_web::{error, Error};
 use rand::{self, rngs::ThreadRng, Rng};
 use tracing::debug;
+
+use crate::domain::View;
 
 /// Command server sends this messages to session
 #[derive(Message)]
@@ -21,20 +18,6 @@ use tracing::debug;
 pub struct Message(pub String);
 
 /// Message for Command server communications
-
-/// New Command session is created
-#[derive(Message)]
-#[rtype(usize)]
-pub struct Connect {
-    pub addr: Recipient<Message>,
-}
-
-/// Session is disconnected
-#[derive(Message)]
-#[rtype(result = "()")]
-pub struct Disconnect {
-    pub id: usize,
-}
 
 /// `CommandServer` manages Command rooms and responsible for coordinating Command session.
 ///
@@ -70,6 +53,13 @@ impl Actor for CommandServer {
     type Context = Context<Self>;
 }
 
+/// New Command session is created
+#[derive(Message)]
+#[rtype(usize)]
+pub struct Connect {
+    pub addr: Recipient<Message>,
+}
+
 /// Handler for Connect message.
 ///
 /// Register new session and assign unique id to this session
@@ -91,46 +81,34 @@ impl Handler<Connect> for CommandServer {
     }
 }
 
+/// Session is disconnected
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct Disconnect {
+    pub id: usize,
+}
+
 /// Handler for Disconnect message.
 impl Handler<Disconnect> for CommandServer {
     type Result = ();
 
-    fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
+    fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) -> Self::Result {
         debug!("Someone disconnected");
-
         self.sessions.remove(&msg.id);
-    }
-}
-
-#[derive(Debug)]
-pub enum View {
-    Clock,
-    Note,
-}
-
-impl TryFrom<String> for View {
-    type Error = Error;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        match value.as_str() {
-            "clock" => Ok(View::Clock),
-            "note" => Ok(View::Note),
-            _ => Err(error::ErrorBadRequest("invalid view value"))
-        }
     }
 }
 
 /// Command clients to change view
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct CmdChangeView {
+pub struct ChangeView {
     pub view: View,
 }
 
-impl Handler<CmdChangeView> for CommandServer {
+impl Handler<ChangeView> for CommandServer {
     type Result = ();
 
-    fn handle(&mut self, msg: CmdChangeView, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: ChangeView, _: &mut Self::Context) -> Self::Result {
         self.send_message(&format!("CmdChangeView {:?}", msg.view));
     }
 }

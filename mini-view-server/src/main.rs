@@ -6,8 +6,8 @@ use actix_web::{middleware::Logger, web, App, HttpServer};
 use clap::Parser;
 use env_logger::Env;
 use mini_view_server::{
-    application::{command_test, get_note_or_inspire, ws_command, CommandServer},
-    infrastructure::NoteRepo,
+    application::{command_test, get_note_or_inspire, ws_command},
+    infrastructure::{CommandServer, NoteRepo},
 };
 
 /// Server to serve the mini-view-web

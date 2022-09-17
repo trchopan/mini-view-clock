@@ -4,7 +4,7 @@ use actix::prelude::*;
 use actix_web_actors::ws;
 use tracing::{debug, info};
 
-use super::server;
+use crate::infrastructure::command_server;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -22,7 +22,7 @@ pub struct WsCommandSession {
     pub hb: Instant,
 
     /// Command server
-    pub addr: Addr<server::CommandServer>,
+    pub addr: Addr<command_server::CommandServer>,
 }
 
 impl WsCommandSession {
@@ -37,7 +37,7 @@ impl WsCommandSession {
                 debug!("Websocket Client heartbeat failed, disconnecting!");
 
                 // notify Command server
-                act.addr.do_send(server::Disconnect { id: act.id });
+                act.addr.do_send(command_server::Disconnect { id: act.id });
 
                 // stop actor
                 ctx.stop();
@@ -67,7 +67,7 @@ impl Actor for WsCommandSession {
         // across all routes within application
         let addr = ctx.address();
         self.addr
-            .send(server::Connect {
+            .send(command_server::Connect {
                 addr: addr.recipient(),
             })
             .into_actor(self)
@@ -85,16 +85,17 @@ impl Actor for WsCommandSession {
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
         // notify Command server
-        self.addr.do_send(server::Disconnect { id: self.id });
+        self.addr
+            .do_send(command_server::Disconnect { id: self.id });
         Running::Stop
     }
 }
 
 /// Handle messages from Command server, we simply send it to peer websocket
-impl Handler<server::Message> for WsCommandSession {
+impl Handler<command_server::Message> for WsCommandSession {
     type Result = ();
 
-    fn handle(&mut self, msg: server::Message, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: command_server::Message, ctx: &mut Self::Context) {
         ctx.text(msg.0);
     }
 }
