@@ -14,22 +14,24 @@ impl NoteRepo {
     }
 
     pub async fn get_inspire_quote(&self) -> Result<Note, Error> {
-        let err_fn = |err: reqwest::Error| {
-            error!("request zenquotes.io: {}", err);
+        let err_reqwest = |err: reqwest::Error| {
+            error!("request zenquotes.io: {:?}", err);
             error::ErrorInternalServerError("error request zenquotes.io")
         };
 
-        let resp = reqwest::get("https://zenquotes.io/api/today")
+        reqwest::get("https://zenquotes.io/api/today")
             .await
-            .map_err(|err| err_fn(err));
-        resp?
+            .map_err(|err| err_reqwest(err))?
             .json::<ZenQuote>()
             .await
-            .map(|q| {
+            .map_err(|err| err_reqwest(err))
+            .and_then(|q| {
                 let quote = q.first().unwrap();
-                Note::from_org_to_html(quote.to_org())
+                match Note::from_org_to_html(quote.to_org()) {
+                    Some(note) => Ok(note),
+                    None => Err(error::ErrorNotFound("cannot parse org file to html")),
+                }
             })
-            .map_err(|err| err_fn(err))
     }
 
     fn get_today_note_path(&self) -> std::path::PathBuf {
@@ -44,10 +46,13 @@ impl NoteRepo {
     pub fn get_note(&self) -> Result<Note, Error> {
         let note_path = self.get_today_note_path();
         fs::read_to_string(note_path)
-            .map(|org_string| Note::from_org_to_html(org_string))
             .map_err(|err| {
                 debug!("Error read daily note file: {:?}", err);
                 error::ErrorNotFound("not found daily note file")
+            })
+            .and_then(|org_string| match Note::from_org_to_html(org_string) {
+                Some(v) => Ok(v),
+                None => Err(error::ErrorNotFound("cannot parse org file to html")),
             })
     }
 }
