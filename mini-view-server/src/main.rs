@@ -6,9 +6,10 @@ use actix_web::{middleware::Logger, web, App, HttpServer};
 use clap::Parser;
 use env_logger::Env;
 use mini_view_server::{
-    application::{command_test, get_note_or_inspire, ws_command},
+    application::{change_view, get_note_or_inspire, ws_command},
     infrastructure::{CommandServer, NoteRepo},
 };
+use tracing::info;
 
 /// Server to serve the mini-view-web
 #[derive(Parser, Debug)]
@@ -31,7 +32,7 @@ struct Args {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    println!("Serving {}:{}", args.addr, args.port);
+    info!("Serving {}:{}", args.addr, args.port);
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
     let note_repo = web::Data::new(NoteRepo::new(args.note_path));
@@ -67,6 +68,6 @@ fn routes(cfg: &mut web::ServiceConfig) {
             .route("/ws_command", web::get().to(ws_command))
             //
             //
-            .route("/command/view/{view}", web::put().to(command_test)),
+            .route("/command/view/{view}", web::put().to(change_view)),
     );
 }

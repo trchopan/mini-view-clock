@@ -29,7 +29,7 @@ pub async fn ws_command(
 }
 
 // PUT /command/view/{view}
-pub async fn command_test(
+pub async fn change_view(
     srv: web::Data<Addr<CommandServer>>,
     view: web::Path<String>,
 ) -> Result<HttpResponse, Error> {
@@ -41,9 +41,4 @@ pub async fn command_test(
         }
         Ok(_) => Ok(HttpResponse::new(StatusCode::OK)),
     }
-}
-
-// GET /command
-pub async fn get_command(srv: web::Data<Addr<CommandServer>>) -> Result<HttpResponse, Error> {
-    Ok(HttpResponse::new(StatusCode::OK))
 }
