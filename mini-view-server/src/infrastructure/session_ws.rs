@@ -4,7 +4,7 @@ use actix::prelude::*;
 use actix_web_actors::ws;
 use tracing::{debug, info};
 
-use crate::infrastructure::command_server;
+use crate::{domain::Session, infrastructure::command_server};
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -15,7 +15,7 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 #[derive(Debug)]
 pub struct WsCommandSession {
     /// unique session id
-    pub id: usize,
+    pub session: Session,
 
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
     /// otherwise we drop connection.
@@ -37,7 +37,9 @@ impl WsCommandSession {
                 debug!("Websocket Client heartbeat failed, disconnecting!");
 
                 // notify Command server
-                act.addr.do_send(command_server::Disconnect { id: act.id });
+                act.addr.do_send(command_server::Disconnect {
+                    id: act.session.hash_id.clone(),
+                });
 
                 // stop actor
                 ctx.stop();
@@ -61,12 +63,13 @@ impl Actor for WsCommandSession {
         let addr = ctx.address();
         self.addr
             .send(command_server::Connect {
+                id: self.session.hash_id.clone(),
                 addr: addr.recipient(),
             })
             .into_actor(self)
             .then(|res, act, ctx| {
                 match res {
-                    Ok(res) => act.id = res,
+                    Ok(res) => act.session.hash_id = res,
 
                     // something is wrong with Command server
                     _ => ctx.stop(),
@@ -78,8 +81,9 @@ impl Actor for WsCommandSession {
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
         // notify Command server
-        self.addr
-            .do_send(command_server::Disconnect { id: self.id });
+        self.addr.do_send(command_server::Disconnect {
+            id: self.session.hash_id.clone(),
+        });
         Running::Stop
     }
 }
@@ -113,9 +117,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsCommandSession 
             ws::Message::Pong(_) => {
                 self.hb = Instant::now();
             }
-            ws::Message::Text(text) => {
-                let m = text.trim();
-                debug!(">>> message text: {:?}", m);
+            ws::Message::Text(_) => {
+                // let m = text.trim();
             }
             ws::Message::Binary(_) => info!("Unexpected binary"),
             ws::Message::Close(reason) => {

@@ -1,6 +1,9 @@
 mod command;
 pub use command::*;
 
+mod session;
+pub use session::*;
+
 mod note;
 pub use note::*;
 

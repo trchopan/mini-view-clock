@@ -36,9 +36,9 @@ impl NoteRepo {
 
     fn get_today_note_path(&self) -> std::path::PathBuf {
         let now = Utc::now();
-        let today_str = now.format("%Y-%m-%d");
+        let today_str = now.format("%Y-%m-%d").to_string();
         let mut note_path = self.note_path.clone();
-        note_path.push(today_str.to_string());
+        note_path.push(today_str);
         note_path.set_extension("org");
         note_path
     }

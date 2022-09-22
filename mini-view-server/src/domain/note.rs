@@ -55,7 +55,7 @@ impl Note {
     }
 
     pub fn from_org_to_html(org_str: String) -> Option<Self> {
-        let contents: Vec<String> = org_str.split('\n').map(|s| s.to_string()).collect();
+        let contents: Vec<String> = org_str.split('\n').map(|s| s.to_owned()).collect();
         let org = Org::from_vec(&contents).map_or(None, |v| Some(v))?;
         let title_str = "#+title:";
         let title = org
@@ -63,10 +63,10 @@ impl Note {
             .iter()
             .find(|&c| c.to_lowercase().starts_with(title_str))
             .map(|title| {
-                let t = title.replace(title_str, "").trim().to_string();
+                let t = title.replace(title_str, "").trim().to_owned();
                 format!("<h1 class=\"org-h1\">{}</h1>", t)
             });
-        let title = title.unwrap_or("".to_string());
+        let title = title.unwrap_or("".to_owned());
         let content = Note::org_to_html(org.subtrees_as_ref());
 
         Some(Self {
@@ -83,13 +83,13 @@ mod tests {
     fn can_clean_id_str() {
         let sample = "aaa [[id:123456-78abc][My String]]ccc";
         assert_eq!(
-            Note::clean_id_str(&sample.to_string()),
+            Note::clean_id_str(&sample.to_owned()),
             "aaa <b class=\"org-bold\">My String</b>ccc"
         );
 
         let sample = "bbb [[https://mini-view.web.app/][mini-view.web.app]] ddd aaa [[id:123456-78abc][My String]]ccc";
         assert_eq!(
-            Note::clean_id_str(&sample.to_string()),
+            Note::clean_id_str(&sample.to_owned()),
             "bbb <b class=\"org-bold\">mini-view.web.app</b> ddd aaa <b class=\"org-bold\">My String</b>ccc"
         );
     }
