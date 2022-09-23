@@ -1,5 +1,4 @@
 use chrono::Utc;
-use diesel::connection::SimpleConnection;
 use diesel::{delete, prelude::*};
 use diesel::{insert_into, update, QueryDsl, RunQueryDsl, SqliteConnection};
 
