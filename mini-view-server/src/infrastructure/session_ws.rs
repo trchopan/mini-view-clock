@@ -4,7 +4,10 @@ use actix::prelude::*;
 use actix_web_actors::ws;
 use tracing::{debug, info};
 
-use crate::{domain::Session, infrastructure::command_server};
+use crate::{
+    domain::{Session, TIMEOUT_DURATION_SEC},
+    infrastructure::command_server,
+};
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -51,6 +54,18 @@ impl WsCommandSession {
             ctx.ping(b"");
         });
     }
+
+    /// Refresh 60 seconds before reach timeout
+    fn refresh_timeout(&self, ctx: &mut ws::WebsocketContext<Self>) {
+        let timeout_dur: u64 = TIMEOUT_DURATION_SEC
+            .try_into()
+            .expect("cannot convert TIMEOUT_DURATION_SEC");
+        ctx.run_interval(Duration::from_secs(timeout_dur - 60), |act, _| {
+            act.addr.do_send(command_server::Refresh {
+                id: act.session.hash_id.clone(),
+            })
+        });
+    }
 }
 
 impl Actor for WsCommandSession {
@@ -59,6 +74,7 @@ impl Actor for WsCommandSession {
     /// Method is called on actor start.
     fn started(&mut self, ctx: &mut Self::Context) {
         self.hb(ctx);
+        self.refresh_timeout(ctx);
 
         let addr = ctx.address();
         self.addr
@@ -80,7 +96,10 @@ impl Actor for WsCommandSession {
     }
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
-        // notify Command server
+        // Last update just before disconnect
+        self.addr.do_send(command_server::Refresh {
+            id: self.session.hash_id.clone(),
+        });
         self.addr.do_send(command_server::Disconnect {
             id: self.session.hash_id.clone(),
         });

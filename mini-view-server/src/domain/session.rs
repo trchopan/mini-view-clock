@@ -7,7 +7,7 @@ use rand::{prelude::Distribution, Rng};
 use serde::{Deserialize, Serialize};
 
 #[cfg(debug_assertions)]
-pub const TIMEOUT_DURATION_SEC: i64 = 30;
+pub const TIMEOUT_DURATION_SEC: i64 = 3 * 60; // 3 mins
 
 #[cfg(not(debug_assertions))]
 pub const TIMEOUT_DURATION_SEC: i64 = 5 * 24 * 60 * 60; // 5 days
@@ -90,9 +90,9 @@ where
     }
 }
 
-struct MyBase64;
+struct MyBase64Charset;
 
-impl Distribution<u8> for MyBase64 {
+impl Distribution<u8> for MyBase64Charset {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> u8 {
         const RANGE: u32 = 26 + 26 + 12;
         loop {
@@ -106,7 +106,7 @@ impl Distribution<u8> for MyBase64 {
 
 pub fn gen_hash_id() -> String {
     let rand_string: String = rand::thread_rng()
-        .sample_iter(&MyBase64)
+        .sample_iter(&MyBase64Charset)
         .take(HASH_ID_LEN)
         .map(char::from)
         .collect();

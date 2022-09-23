@@ -141,6 +141,31 @@ impl Handler<Disconnect> for CommandServer {
 
 #[derive(Message)]
 #[rtype(result = "()")]
+pub struct Refresh {
+    pub id: String,
+}
+
+impl Handler<Refresh> for CommandServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: Refresh, ctx: &mut Self::Context) -> Self::Result {
+        let mut conn = self
+            .pool
+            .get()
+            .expect("couldn't get db connection from pool");
+        async move {
+            match update_session_timestamp(&mut conn, msg.id.clone()).await {
+                Ok(_) => debug!("session refreshed {}", msg.id),
+                Err(err) => error!("session refresh error. Err: {:?}", err),
+            }
+        }
+        .into_actor(self)
+        .wait(ctx)
+    }
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
 pub struct ChangeView {
     pub id: String,
     pub view: View,
