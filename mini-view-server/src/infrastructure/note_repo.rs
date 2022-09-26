@@ -13,7 +13,7 @@ impl NoteRepo {
         Self { note_path }
     }
 
-    pub async fn get_inspire_quote(&self) -> Result<Note, Error> {
+    pub async fn get_inspire_note(&self) -> Result<Note, Error> {
         let err_reqwest = |err: reqwest::Error| {
             error!("request zenquotes.io: {:?}", err);
             error::ErrorInternalServerError("error request zenquotes.io")

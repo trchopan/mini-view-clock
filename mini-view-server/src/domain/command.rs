@@ -1,4 +1,4 @@
-use actix_web::{error, Error};
+use std::str::FromStr;
 
 #[derive(Debug)]
 pub enum View {
@@ -6,14 +6,23 @@ pub enum View {
     Note,
 }
 
-impl TryFrom<String> for View {
-    type Error = Error;
+impl FromStr for View {
+    type Err = String;
 
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        match value.as_str() {
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
             "clock" => Ok(View::Clock),
             "note" => Ok(View::Note),
-            _ => Err(error::ErrorBadRequest("invalid view value")),
+            _ => Err("invalid view value. valid values: clock, note".to_owned()),
+        }
+    }
+}
+
+impl ToString for View {
+    fn to_string(&self) -> String {
+        match self {
+            View::Clock => "clock".to_owned(),
+            View::Note => "note".to_owned(),
         }
     }
 }

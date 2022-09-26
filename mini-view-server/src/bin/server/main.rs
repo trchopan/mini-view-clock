@@ -7,7 +7,7 @@ use clap::Parser;
 use env_logger::Env;
 use mini_view_server::{
     application::{change_view, get_note_or_inspire, ws_command},
-    infrastructure::{CommandServer, NoteRepo},
+    infrastructure::{AuthRepo, CommandServer, NoteRepo},
 };
 use tracing::info;
 
@@ -26,6 +26,10 @@ struct Args {
     /// Daily note path
     #[clap(long, value_parser)]
     note_path: std::path::PathBuf,
+
+    /// Secret string
+    #[clap(long, value_parser)]
+    secret: String,
 }
 
 #[actix_web::main]
@@ -36,6 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
     let note_repo = web::Data::new(NoteRepo::new(args.note_path));
+    let auth_repo = web::Data::new(AuthRepo::new(args.secret));
 
     let visitor_count = Arc::new(AtomicUsize::new(0));
     let command_server = CommandServer::new(visitor_count.clone()).start();
@@ -45,6 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .wrap(Logger::default())
             .wrap(Cors::permissive())
             .app_data(note_repo.clone())
+            .app_data(auth_repo.clone())
             .app_data(web::Data::from(visitor_count.clone()))
             .app_data(web::Data::new(command_server.clone()))
             .configure(routes)
@@ -60,14 +66,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("")
-            //
-            // Get Daily Org note
+            // Get daily org note or inspire quote
             .route("/note-or-inspire", web::get().to(get_note_or_inspire))
-            //
-            //
+
+            // Websocket endpoint to listen to command server
             .route("/ws_command", web::get().to(ws_command))
-            //
-            //
-            .route("/command/view/{view}", web::put().to(change_view)),
+
+            // Command endpoint with verification by HMAC SHA255 token
+            .route(
+                "/command/view/{view}/{timestamp}/{token}",
+                web::put().to(change_view),
+            ),
     );
 }

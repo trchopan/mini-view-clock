@@ -23,3 +23,15 @@ chrono = { version = "0.4" }
 org = "0.3.1"
 lazy_static = "1.4.0"
 regex = "1.6.0"
+hmac = "0.12.1"
+hex = "0.4.3"
+sha2 = "0.10.6"
+tokio = { version = "1.21.1", features = ["full"] }
+
+[[bin]]
+name = "mini-view-cli"
+path = "src/bin/cli/main.rs"
+
+[[bin]]
+name = "mini-view-server"
+path = "src/bin/server/main.rs"

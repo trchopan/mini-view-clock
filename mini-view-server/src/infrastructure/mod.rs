@@ -1,3 +1,6 @@
+mod auth_repo;
+pub use auth_repo::*;
+
 mod note_repo;
 pub use note_repo::*;
 
