@@ -45,7 +45,7 @@
 
   let widthPadding = 0
   $: clockStyle = () => {
-    return `width: calc(100vw - ${widthPadding}rem);`
+    return `width: calc(100vw - ${widthPadding}rem); height: 100vh;`
   }
 
   let interval = []
