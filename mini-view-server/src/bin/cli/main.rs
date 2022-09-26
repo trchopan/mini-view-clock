@@ -45,9 +45,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 timestamp,
                 token
             );
-            let res = client.put(url.clone()).send().await?;
-            println!("{:?}", url);
-            println!("{:?}", res.text().await);
+            let res_text = client.put(url.clone()).send().await?.text().await?;
+            println!("{:?}", res_text);
         }
     }
 
