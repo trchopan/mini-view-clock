@@ -26,10 +26,10 @@ impl Note {
             org.iter()
                 .map(|sub| {
                     let heading = format!(
-                    "<h{depth} id=\"org-h{content}\" class=\"org-h{depth}\">{content}</h{depth}>",
-                    depth = sub.depth() + 1,
-                    content = sub.heading(),
-                );
+                        "<h{depth} id=\"org-h{content}\" class=\"org-h{depth}\">{content}</h{depth}>",
+                        depth = sub.depth() + 1,
+                        content = sub.heading(),
+                    );
                     let content: Vec<String> = sub
                         .content_as_ref()
                         .iter()
