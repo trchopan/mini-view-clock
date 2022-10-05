@@ -73,6 +73,22 @@ impl Note {
             content: title + &content.join(""),
         })
     }
+
+    pub fn from_headers_to_html(strs: Vec<String>) -> Self {
+        let content = strs
+            .iter()
+            .enumerate()
+            .map(|(index, s)| {
+                format!(
+                    "<h{depth} id=\"org-h{content}\" class=\"org-h{depth}\">{content}</h{depth}>",
+                    depth = index + 1,
+                    content = s,
+                )
+            })
+            .collect::<Vec<String>>()
+            .join("");
+        Self { content }
+    }
 }
 
 #[cfg(test)]

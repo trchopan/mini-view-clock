@@ -1,18 +1,21 @@
-use crate::domain::{Note, ZenQuote};
+use crate::domain::{Filter, Note, NotionDbQuery, NotionQueryResponse, QuerySelect, ZenQuote};
 use actix_web::{error, Error};
-use chrono::Utc;
-use std::fs;
-use tracing::{debug, error};
+use reqwest::header;
+use tracing::error;
 
 pub struct NoteRepo {
-    note_path: std::path::PathBuf,
+    notion_page: String,
+    notion_key: String,
 }
 
 impl NoteRepo {
-    pub fn new(note_path: std::path::PathBuf) -> Self {
-        Self { note_path }
+    pub fn new(notion_page: String, notion_key: String) -> Self {
+        Self {
+            notion_page,
+            notion_key,
+        }
     }
-
+    /// Get today inspiration quote from zenquotes.io
     pub async fn get_inspire_note(&self) -> Result<Note, Error> {
         let err_reqwest = |err: reqwest::Error| {
             error!("request zenquotes.io: {:?}", err);
@@ -34,25 +37,51 @@ impl NoteRepo {
             })
     }
 
-    fn get_today_note_path(&self) -> std::path::PathBuf {
-        let now = Utc::now();
-        let today_str = now.format("%Y-%m-%d");
-        let mut note_path = self.note_path.clone();
-        note_path.push(today_str.to_string());
-        note_path.set_extension("org");
-        note_path
-    }
+    /// Get current task list from Notion filtered by Status `Today`.
+    /// If there is some tasks, convert them to HTML.
+    pub async fn get_notion_tasklist(&self) -> Result<Note, Error> {
+        let err_reqwest = |err: reqwest::Error| {
+            error!("request api.notion.com: {:?}", err);
+            error::ErrorInternalServerError("error request api.notion.com")
+        };
 
-    pub fn get_note(&self) -> Result<Note, Error> {
-        let note_path = self.get_today_note_path();
-        fs::read_to_string(note_path)
-            .map_err(|err| {
-                debug!("Error read daily note file: {:?}", err);
-                error::ErrorNotFound("not found daily note file")
-            })
-            .and_then(|org_string| match Note::from_org_to_html(org_string) {
-                Some(v) => Ok(v),
-                None => Err(error::ErrorNotFound("cannot parse org file to html")),
+        let client = reqwest::Client::new();
+
+        let query = NotionDbQuery {
+            filter: Filter {
+                property: "Status".to_owned(),
+                select: QuerySelect {
+                    equals: "Today".to_owned(),
+                },
+            },
+        };
+
+        let url = format!(
+            "https://api.notion.com/v1/databases/{page}/query",
+            page = self.notion_page
+        );
+        client
+            .post(url)
+            .json(&query)
+            .header(header::AUTHORIZATION, format!("Bearer {}", self.notion_key))
+            .header("Notion-Version", "2022-02-22")
+            .send()
+            .await
+            .map_err(|err| err_reqwest(err))?
+            .json::<NotionQueryResponse>()
+            .await
+            .map_err(|err| err_reqwest(err))
+            .and_then(|q| {
+                let headers: Vec<String> = q
+                    .results
+                    .iter()
+                    .map(|r| r.properties.name.title.first().unwrap().plain_text.clone())
+                    .collect();
+                if headers.len() > 0 {
+                    Ok(Note::from_headers_to_html(headers))
+                } else {
+                    Err(error::ErrorNotFound("empty results from notion"))
+                }
             })
     }
 }
