@@ -77,11 +77,10 @@ impl Note {
     pub fn from_headers_to_html(strs: Vec<String>) -> Self {
         let content = strs
             .iter()
-            .enumerate()
-            .map(|(index, s)| {
+            .map(|s| {
                 format!(
                     "<h{depth} id=\"org-h{content}\" class=\"org-h{depth}\">{content}</h{depth}>",
-                    depth = index + 1,
+                    depth = 2,
                     content = s,
                 )
             })
