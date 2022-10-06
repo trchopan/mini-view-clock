@@ -75,7 +75,20 @@ impl NoteRepo {
                 let headers: Vec<String> = q
                     .results
                     .iter()
-                    .map(|r| r.properties.name.title.first().unwrap().plain_text.clone())
+                    .map(|r| {
+                        let emoji = r.icon.as_ref().map_or_else(
+                            || "".to_owned(),
+                            |icon| {
+                                if icon["type"] == "emoji".to_owned() {
+                                    icon["emoji"].to_string()
+                                } else {
+                                    "".to_owned()
+                                }
+                            },
+                        );
+                        let plain_text = &r.properties.name.title.first().unwrap().plain_text;
+                        emoji + " " + plain_text
+                    })
                     .collect();
                 if headers.len() > 0 {
                     Ok(Note::from_headers_to_html(headers))
