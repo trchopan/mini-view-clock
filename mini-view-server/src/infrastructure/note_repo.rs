@@ -72,7 +72,7 @@ impl NoteRepo {
             .await
             .map_err(|err| err_reqwest(err))
             .and_then(|q| {
-                let headers: Vec<String> = q
+                let headers: Vec<(Option<char>, String)> = q
                     .results
                     .iter()
                     .map(|r| {
@@ -86,12 +86,9 @@ impl NoteRepo {
                                 }
                             },
                         );
-                        let plain_text = &r.properties.name.title.first().unwrap().plain_text;
-                        if let Some(emoji) = emoji {
-                            format!("{emoji} {plain_text}")
-                        } else {
-                            plain_text.to_string()
-                        }
+                        let plain_text =
+                            r.properties.name.title.first().unwrap().plain_text.clone();
+                        (emoji, plain_text)
                     })
                     .collect();
                 if headers.len() > 0 {

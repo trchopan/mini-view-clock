@@ -59,11 +59,6 @@
     <Clock />
   </div>
   <div class="text">{@html text}</div>
-  <div class="headers">
-    {#each headers() as header}
-      <p><a href={`#${header.id}`}>{header.text}</a></p>
-    {/each}
-  </div>
   <div class="buttons">
     <button on:click={() => getNote()}>Load</button>
   </div>
@@ -85,16 +80,6 @@
     white-space: break-spaces;
     font-size: 1.2rem;
     padding: 5rem 0.5rem 20rem 1rem;
-    overflow-y: scroll;
-  }
-  .headers {
-    position: fixed;
-    right: 0.5rem;
-    top: calc(0.5rem + (100vw / 3.6) * 104 / 215);
-    bottom: 3rem;
-    width: calc(100vw / 3.6);
-    color: var(--secondary);
-    line-height: 1.2rem;
     overflow-y: scroll;
   }
   .buttons {

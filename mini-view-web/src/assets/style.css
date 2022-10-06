@@ -53,6 +53,10 @@ button {
   padding: 0.3rem 0.5rem;
 }
 
+.emoji {
+  font-family: 'Noto Color Emoji', sans-serif;
+}
+
 .org-h1,
 .org-h2,
 .org-h3,
