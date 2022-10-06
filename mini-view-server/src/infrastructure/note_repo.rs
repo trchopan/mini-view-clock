@@ -77,17 +77,21 @@ impl NoteRepo {
                     .iter()
                     .map(|r| {
                         let emoji = r.icon.as_ref().map_or_else(
-                            || "".to_owned(),
+                            || None,
                             |icon| {
                                 if icon["type"] == "emoji".to_owned() {
-                                    icon["emoji"].to_string()
+                                    icon["emoji"].to_string().chars().nth(1)
                                 } else {
-                                    "".to_owned()
+                                    None
                                 }
                             },
                         );
                         let plain_text = &r.properties.name.title.first().unwrap().plain_text;
-                        emoji + " " + plain_text
+                        if let Some(emoji) = emoji {
+                            format!("{emoji} {plain_text}")
+                        } else {
+                            plain_text.to_string()
+                        }
                     })
                     .collect();
                 if headers.len() > 0 {
