@@ -1,6 +1,6 @@
 [package]
-authors = ["Chop Tr (chop@chop.ink)"]
-name = "mini-view-server"
+authors = ["Chop Tr (chop@chop.dev)"]
+name = "server"
 version = "0.1.0"
 edition = "2021"
 

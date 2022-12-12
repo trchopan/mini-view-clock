@@ -14,7 +14,7 @@ struct Args {
     #[clap(long, value_parser)]
     secret: String,
 
-    /// Secret string
+    /// Command
     #[clap(subcommand)]
     command: Command,
 }

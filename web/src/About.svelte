@@ -2,7 +2,7 @@
   <div class="about-container">
     <div class="about">
       <p>Just a simple clock</p>
-      <p class="small">Made by <a href="https://chop.ink">Chop Tr</a></p>
+      <p class="small">Made by <a href="https://chop.dev">Chop Tr</a></p>
     </div>
   </div>
 </template>

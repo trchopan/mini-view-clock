@@ -22,8 +22,6 @@
       {id: 'binancecoin', name: 'BNB'},
       {id: 'polkadot', name: 'DOT'},
       {id: 'harmony', name: 'ONE'},
-      {id: 'near', name: 'NEAR'},
-      {id: 'solana', name: 'SOL'},
     ]
 
     const promises = async () => {
@@ -80,7 +78,7 @@
     {#each coinInfo as coin}
       <div class="coin">
         <span>{coin.name}:</span>
-        <span>{fmtNumber(coin.usd)}</span>
+        <span>{fmtNumber(coin.usd, 4)}</span>
         <span
           style:color={coin.usd_24h_change > 0
             ? 'var(--secondary)'
@@ -108,12 +106,12 @@
     bottom: 0.5rem;
     right: 0.5rem;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     grid-row-gap: 0.3rem;
     grid-column-gap: 0.5rem;
   }
   .coin {
-    font-size: 0.68rem;
+    font-size: 0.86rem;
   }
   .coin > span {
     margin-right: 0.3rem;
