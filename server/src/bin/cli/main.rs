@@ -1,6 +1,6 @@
 use chrono::Utc;
 use clap::{Parser, Subcommand};
-use mini_view_server::{domain::View, infrastructure::AuthRepo};
+use server::{domain::View, infrastructure::AuthRepo};
 
 /// Client to send the command with given secret
 #[derive(Parser, Debug)]

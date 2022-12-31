@@ -5,7 +5,7 @@ use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use clap::Parser;
 use env_logger::Env;
-use mini_view_server::{
+use server::{
     application::{change_view, get_note_or_inspire, ws_command},
     infrastructure::{AuthRepo, CommandServer, NoteRepo},
 };
