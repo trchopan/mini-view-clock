@@ -5,13 +5,19 @@ use reqwest::header;
 pub struct NoteRepo {
     notion_page: String,
     notion_key: String,
+    notion_endpoint: String,
+    zen_quote_endpoint: String,
 }
 
 impl NoteRepo {
     pub fn new(notion_page: String, notion_key: String) -> Self {
+        let notion_endpoint = "https://api.notion.com/v1".to_string();
+        let zen_quote_endpoint = "https://zenquotes.io/api".to_string();
         Self {
             notion_page,
             notion_key,
+            notion_endpoint,
+            zen_quote_endpoint,
         }
     }
     /// Get today inspiration quote from zenquotes.io
@@ -21,18 +27,21 @@ impl NoteRepo {
             error::ErrorInternalServerError("error request zenquotes.io")
         };
 
-        reqwest::get("https://zenquotes.io/api/today")
-            .await
-            .map_err(|err| err_reqwest(err))?
-            .json::<ZenQuote>()
-            .await
-            .map_err(|err| err_reqwest(err))
-            .and_then(|q| {
-                let quote = q.first().unwrap();
-                Ok(Note {
-                    content: quote.to_html(),
-                })
+        reqwest::get(format!(
+            "{endpoint}/today",
+            endpoint = self.zen_quote_endpoint
+        ))
+        .await
+        .map_err(|err| err_reqwest(err))?
+        .json::<ZenQuote>()
+        .await
+        .map_err(|err| err_reqwest(err))
+        .and_then(|q| {
+            let quote = q.first().unwrap();
+            Ok(Note {
+                content: quote.to_html(),
             })
+        })
     }
 
     /// Get current task list from Notion filtered by Status `Today`.
@@ -55,7 +64,8 @@ impl NoteRepo {
         };
 
         let url = format!(
-            "https://api.notion.com/v1/databases/{page}/query",
+            "{endpoint}/databases/{page}/query",
+            endpoint = self.notion_endpoint,
             page = self.notion_page
         );
         client
