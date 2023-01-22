@@ -16,7 +16,7 @@ impl ZenQuoteElement {
 
     pub fn to_html(&self) -> String {
         format!(
-            "<h1 class=\"org-h1\">{author}</h1><p>{quote}</p>",
+            "<h1 class=\"org-h2\">{author}</h1><p>{quote}</p>",
             author = self.a,
             quote = self.q
         )
