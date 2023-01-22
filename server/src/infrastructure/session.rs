@@ -2,7 +2,6 @@ use std::time::{Duration, Instant};
 
 use actix::prelude::*;
 use actix_web_actors::ws;
-use tracing::{debug, info};
 
 use crate::infrastructure::command_server;
 
@@ -34,7 +33,7 @@ impl WsCommandSession {
             // check client heartbeats
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
                 // heartbeat timed out
-                debug!("Websocket Client heartbeat failed, disconnecting!");
+                tracing::debug!("Websocket Client heartbeat failed, disconnecting!");
 
                 // notify Command server
                 act.addr.do_send(command_server::Disconnect { id: act.id });
@@ -96,15 +95,13 @@ impl Handler<command_server::Message> for WsCommandSession {
 /// WebSocket message handler
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsCommandSession {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        let msg = match msg {
-            Err(_) => {
-                ctx.stop();
-                return;
-            }
-            Ok(msg) => msg,
-        };
+        if msg.is_err() {
+            ctx.stop();
+            return;
+        }
+        let msg = msg.unwrap();
 
-        debug!("WEBSOCKET MESSAGE: {msg:?}");
+        tracing::debug!("WEBSOCKET MESSAGE: {msg:?}");
         match msg {
             ws::Message::Ping(msg) => {
                 self.hb = Instant::now();
@@ -115,9 +112,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsCommandSession 
             }
             ws::Message::Text(text) => {
                 let m = text.trim();
-                debug!(">>> message text: {:?}", m);
+                tracing::debug!(">>> message text: {:?}", m);
             }
-            ws::Message::Binary(_) => info!("Unexpected binary"),
+            ws::Message::Binary(_) => tracing::info!("Unexpected binary"),
             ws::Message::Close(reason) => {
                 ctx.close(reason);
                 ctx.stop();

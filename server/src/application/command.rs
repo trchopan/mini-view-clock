@@ -8,7 +8,6 @@ use actix_web::{
 use actix_web_actors::ws;
 use chrono::Utc;
 use reqwest::StatusCode;
-use tracing::debug;
 
 use crate::{
     domain::View,
@@ -55,7 +54,7 @@ pub async fn change_view(
     let view = View::from_str(&view).map_err(|e| ErrorBadRequest(e))?;
     match srv.send(ChangeView { view }).await {
         Err(err) => {
-            debug!("command_test err: {:?}", err);
+            tracing::debug!("command_test err: {:?}", err);
             Err(ErrorInternalServerError(err))
         }
         Ok(_) => Ok(HttpResponse::new(StatusCode::OK)),

@@ -1,7 +1,6 @@
 use crate::domain::{Filter, Note, NotionDbQuery, NotionQueryResponse, QuerySelect, ZenQuote};
 use actix_web::{error, Error};
 use reqwest::header;
-use tracing::error;
 
 pub struct NoteRepo {
     notion_page: String,
@@ -18,7 +17,7 @@ impl NoteRepo {
     /// Get today inspiration quote from zenquotes.io
     pub async fn get_inspire_note(&self) -> Result<Note, Error> {
         let err_reqwest = |err: reqwest::Error| {
-            error!("request zenquotes.io: {:?}", err);
+            tracing::error!("request zenquotes.io: {:?}", err);
             error::ErrorInternalServerError("error request zenquotes.io")
         };
 
@@ -30,10 +29,9 @@ impl NoteRepo {
             .map_err(|err| err_reqwest(err))
             .and_then(|q| {
                 let quote = q.first().unwrap();
-                match Note::from_org_to_html(quote.to_org()) {
-                    Some(note) => Ok(note),
-                    None => Err(error::ErrorNotFound("cannot parse org file to html")),
-                }
+                Ok(Note {
+                    content: quote.to_html(),
+                })
             })
     }
 
@@ -41,7 +39,7 @@ impl NoteRepo {
     /// If there is some tasks, convert them to HTML.
     pub async fn get_notion_tasklist(&self) -> Result<Note, Error> {
         let err_reqwest = |err: reqwest::Error| {
-            error!("request api.notion.com: {:?}", err);
+            tracing::error!("request api.notion.com: {:?}", err);
             error::ErrorInternalServerError("error request api.notion.com")
         };
 
