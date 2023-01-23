@@ -26,6 +26,10 @@ sha2 = "0.10.6"
 tokio = { version = "1.21.1", features = ["full"] }
 lazy_static = "1.4.0"
 dotenv = "0.15.0"
+diesel = { version = "2.0.2", features = ["sqlite", "r2d2"] }
+r2d2 = "0.8.10"
+actix-multipart = "0.5.0"
+futures-util = "0.3.25"
 
 [[bin]]
 name = "mini-view-cli"

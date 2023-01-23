@@ -2,11 +2,10 @@ use std::{str::FromStr, time::Instant};
 
 use actix::*;
 use actix_web::{
-    error::{ErrorBadRequest, ErrorInternalServerError, ErrorUnauthorized},
+    error::{ErrorBadRequest, ErrorInternalServerError},
     web, Error, HttpRequest, HttpResponse,
 };
 use actix_web_actors::ws;
-use chrono::Utc;
 use reqwest::StatusCode;
 
 use crate::{
@@ -35,21 +34,12 @@ pub async fn ws_command(
 pub async fn change_view(
     auth_repo: web::Data<AuthRepo>,
     srv: web::Data<Addr<CommandServer>>,
-    path: web::Path<(String, u32, String)>,
+    path: web::Path<(String, i64, String)>,
 ) -> Result<HttpResponse, Error> {
     let (view, timestamp, token) = path.into_inner();
 
-    // Check if the timestamp is in range 5 seconds of current timestamp
-    if (Utc::now().timestamp() - timestamp as i64).abs() > 5 {
-        return Err(ErrorUnauthorized(
-            "timestamp is not in 5 seconds range of current timestamp",
-        ));
-    }
-
     let message = format!("{view:}/{timestamp:}");
-    if !auth_repo.verify_message(&token, &message) {
-        return Err(ErrorUnauthorized("request failed authorization"));
-    }
+    auth_repo.verify_message(&token, &message, timestamp)?;
 
     let view = View::from_str(&view).map_err(ErrorBadRequest)?;
     match srv.send(ChangeView { view }).await {

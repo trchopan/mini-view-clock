@@ -5,8 +5,11 @@ use clap::Parser;
 use env_logger::Env;
 use lazy_static::lazy_static;
 use server::{
-    application::{change_view, get_note_or_inspire, ws_command},
-    infrastructure::{AuthRepo, CommandServer, NoteRepo},
+    // application::{change_view, get_note_or_inspire, ws_command},
+    application,
+    infrastructure::{
+        get_db_pool, AuthRepo, CommandServer, NoteRepo, PlexRepo, TelegramBotRepo,
+    },
 };
 
 /// Server to serve the mini-view-web
@@ -41,6 +44,7 @@ struct Args {
 lazy_static! {
     static ref ADDR: String = std::env::var("ADDR").unwrap();
     static ref PORT: String = std::env::var("PORT").unwrap();
+    static ref DATABASE_URL: String = std::env::var("DATABASE_URL").unwrap();
     static ref NOTION_ENDPOINT: String = std::env::var("NOTION_ENDPOINT").unwrap();
     static ref ZEN_QUOTE_ENDPOINT: String = std::env::var("ZEN_QUOTE_ENDPOINT").unwrap();
     static ref TELEGRAM_ENDPOINT: String = std::env::var("TELEGRAM_ENDPOINT").unwrap();
@@ -52,6 +56,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     dotenv::from_filename(args.env).expect("Cannot load env file");
     env_logger::init_from_env(Env::default().default_filter_or("info"));
+
+    let pool = get_db_pool(DATABASE_URL.to_string());
 
     let addr = ADDR.to_string();
     let port = PORT
@@ -67,17 +73,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         args.notion_page,
         args.notion_key,
     ));
-
-    let command_server = CommandServer::new().start();
+    let telegram_repo = web::Data::new(TelegramBotRepo::new(
+        TELEGRAM_ENDPOINT.to_string(),
+        args.chat_id,
+        args.bot_token,
+    ));
+    let plex_token_repo = web::Data::new(PlexRepo::new(pool));
+    let command_server = web::Data::new(CommandServer::new().start());
 
     let server = HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
             .wrap(Cors::permissive())
+            .app_data(plex_token_repo.clone())
             .app_data(note_repo.clone())
             .app_data(auth_repo.clone())
-            // .app_data(telegram_repo.clone())
-            .app_data(web::Data::new(command_server.clone()))
+            .app_data(telegram_repo.clone())
+            .app_data(command_server.clone())
             .configure(routes)
     })
     .bind((addr, port))?
@@ -92,13 +104,27 @@ fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("")
             // Get daily org note or inspire quote
-            .route("/note-or-inspire", web::get().to(get_note_or_inspire))
+            .route(
+                "/note-or-inspire",
+                web::get().to(application::get_note::get_note_or_inspire),
+            )
             // Websocket endpoint to listen to command server
-            .route("/ws_command", web::get().to(ws_command))
+            .route(
+                "/ws_command",
+                web::get().to(application::command::ws_command),
+            )
             // Command endpoint with verification by HMAC SHA255 token
             .route(
                 "/command/view/{view}/{timestamp}/{token}",
-                web::put().to(change_view),
+                web::put().to(application::command::change_view),
+            )
+            .route(
+                "/plex/new-token",
+                web::post().to(application::plex_webhook::new_plex_token),
+            )
+            .route(
+                "/plex/hook/{token}",
+                web::post().to(application::plex_webhook::plex_webhook),
             ),
     );
 }
