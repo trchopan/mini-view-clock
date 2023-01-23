@@ -1,6 +1,5 @@
 use chrono::Utc;
 use clap::{Parser, Subcommand};
-use serde_json::json;
 use server::{
     application::plex_webhook::NewPlexTokenPayload, domain::View, infrastructure::AuthRepo,
 };
