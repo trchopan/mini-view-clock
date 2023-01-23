@@ -53,15 +53,15 @@ impl NoteRepo {
             endpoint = self.zen_quote_endpoint
         ))
         .await
-        .map_err(|err| err_reqwest(err))?
+        .map_err(err_reqwest)?
         .json::<ZenQuote>()
         .await
-        .map_err(|err| err_reqwest(err))
-        .and_then(|q| {
+        .map_err(err_reqwest)
+        .map(|q| {
             let quote = q.first().unwrap();
-            Ok(Note {
+            Note {
                 content: quote.to_html(),
-            })
+            }
         })
     }
 
@@ -92,10 +92,10 @@ impl NoteRepo {
             .json(&query)
             .send()
             .await
-            .map_err(|err| err_reqwest(err))?
+            .map_err(err_reqwest)?
             .json::<NotionQueryResponse>()
             .await
-            .map_err(|err| err_reqwest(err))
+            .map_err(err_reqwest)
             .and_then(|q| {
                 let headers: Vec<(Option<char>, String)> = q
                     .results
@@ -116,10 +116,10 @@ impl NoteRepo {
                         (emoji, plain_text)
                     })
                     .collect();
-                if headers.len() > 0 {
-                    Ok(Note::from_headers_to_html(headers))
-                } else {
+                if headers.is_empty() {
                     Err(error::ErrorNotFound("empty results from notion"))
+                } else {
+                    Ok(Note::from_headers_to_html(headers))
                 }
             })
     }

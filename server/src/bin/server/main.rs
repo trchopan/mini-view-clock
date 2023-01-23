@@ -1,5 +1,3 @@
-use std::sync::{atomic::AtomicUsize, Arc};
-
 use actix::Actor;
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
@@ -45,6 +43,7 @@ lazy_static! {
     static ref PORT: String = std::env::var("PORT").unwrap();
     static ref NOTION_ENDPOINT: String = std::env::var("NOTION_ENDPOINT").unwrap();
     static ref ZEN_QUOTE_ENDPOINT: String = std::env::var("ZEN_QUOTE_ENDPOINT").unwrap();
+    static ref TELEGRAM_ENDPOINT: String = std::env::var("TELEGRAM_ENDPOINT").unwrap();
 }
 
 #[actix_web::main]
@@ -61,16 +60,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Port must be integer");
     tracing::info!("Serving {}:{}", addr, port);
 
+    let auth_repo = web::Data::new(AuthRepo::new(args.secret));
     let note_repo = web::Data::new(NoteRepo::new(
         NOTION_ENDPOINT.to_string(),
         ZEN_QUOTE_ENDPOINT.to_string(),
         args.notion_page,
         args.notion_key,
     ));
-    let auth_repo = web::Data::new(AuthRepo::new(args.secret));
 
-    let visitor_count = Arc::new(AtomicUsize::new(0));
-    let command_server = CommandServer::new(visitor_count.clone()).start();
+    let command_server = CommandServer::new().start();
 
     let server = HttpServer::new(move || {
         App::new()
@@ -79,7 +77,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .app_data(note_repo.clone())
             .app_data(auth_repo.clone())
             // .app_data(telegram_repo.clone())
-            .app_data(web::Data::from(visitor_count.clone()))
             .app_data(web::Data::new(command_server.clone()))
             .configure(routes)
     })

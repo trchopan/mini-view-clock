@@ -1,10 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc,
-    },
-};
+use std::collections::HashMap;
 
 use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
@@ -22,19 +16,17 @@ pub struct Message(pub String);
 /// `CommandServer` manages Command rooms and responsible for coordinating Command session.
 ///
 /// Implementation is very naïve.
-#[derive()]
+#[derive(Default)]
 pub struct CommandServer {
     sessions: HashMap<usize, Recipient<Message>>,
     rng: ThreadRng,
-    visitor_count: Arc<AtomicUsize>,
 }
 
 impl CommandServer {
-    pub fn new(visitor_count: Arc<AtomicUsize>) -> CommandServer {
+    pub fn new() -> CommandServer {
         CommandServer {
             sessions: HashMap::new(),
             rng: rand::thread_rng(),
-            visitor_count,
         }
     }
 
@@ -72,9 +64,6 @@ impl Handler<Connect> for CommandServer {
         // register session with random id
         let id = self.rng.gen::<usize>();
         self.sessions.insert(id, msg.addr);
-
-        let count = self.visitor_count.fetch_add(1, Ordering::SeqCst);
-        self.send_message(&format!("Total visitors {count}"));
 
         // send id back
         id

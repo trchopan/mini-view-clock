@@ -47,11 +47,11 @@ pub async fn change_view(
     }
 
     let message = format!("{view:}/{timestamp:}");
-    if auth_repo.verify_message(&token, &message) == false {
+    if !auth_repo.verify_message(&token, &message) {
         return Err(ErrorUnauthorized("request failed authorization"));
     }
 
-    let view = View::from_str(&view).map_err(|e| ErrorBadRequest(e))?;
+    let view = View::from_str(&view).map_err(ErrorBadRequest)?;
     match srv.send(ChangeView { view }).await {
         Err(err) => {
             tracing::debug!("command_test err: {:?}", err);
