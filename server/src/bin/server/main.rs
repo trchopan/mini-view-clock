@@ -5,6 +5,7 @@ use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use clap::Parser;
 use env_logger::Env;
+use lazy_static::lazy_static;
 use server::{
     application::{change_view, get_note_or_inspire, ws_command},
     infrastructure::{AuthRepo, CommandServer, NoteRepo},
@@ -14,14 +15,6 @@ use server::{
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
-    /// The serving addr for the server. Default: 127.0.0.1
-    #[clap(long, default_value = "127.0.0.1")]
-    addr: String,
-
-    /// The port for the server. Default: 5001
-    #[clap(long, default_value = "5001")]
-    port: u16,
-
     /// Notion Task List page
     #[clap(long)]
     notion_page: String,
@@ -41,16 +34,39 @@ struct Args {
     /// Telegram bot token
     #[clap(long)]
     bot_token: String,
+
+    /// Environment
+    #[clap(long, default_value = ".env")]
+    env: String,
+}
+
+lazy_static! {
+    static ref ADDR: String = std::env::var("ADDR").unwrap();
+    static ref PORT: String = std::env::var("PORT").unwrap();
+    static ref NOTION_ENDPOINT: String = std::env::var("NOTION_ENDPOINT").unwrap();
+    static ref ZEN_QUOTE_ENDPOINT: String = std::env::var("ZEN_QUOTE_ENDPOINT").unwrap();
 }
 
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    tracing::info!("Serving {}:{}", args.addr, args.port);
+    dotenv::from_filename(args.env).expect("Cannot load env file");
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
-    let note_repo = web::Data::new(NoteRepo::new(args.notion_page, args.notion_key));
+    let addr = ADDR.to_string();
+    let port = PORT
+        .to_string()
+        .parse::<u16>()
+        .expect("Port must be integer");
+    tracing::info!("Serving {}:{}", addr, port);
+
+    let note_repo = web::Data::new(NoteRepo::new(
+        NOTION_ENDPOINT.to_string(),
+        ZEN_QUOTE_ENDPOINT.to_string(),
+        args.notion_page,
+        args.notion_key,
+    ));
     let auth_repo = web::Data::new(AuthRepo::new(args.secret));
 
     let visitor_count = Arc::new(AtomicUsize::new(0));
@@ -67,7 +83,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .app_data(web::Data::new(command_server.clone()))
             .configure(routes)
     })
-    .bind((args.addr, args.port))?
+    .bind((addr, port))?
     .run();
 
     server.await?;

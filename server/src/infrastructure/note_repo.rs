@@ -5,15 +5,19 @@ use actix_web::{error, Error};
 use reqwest::header;
 
 pub struct NoteRepo {
+    notion_endpoint: String,
+    zen_quote_endpoint: String,
     notion_page: String,
     notion_client: reqwest::Client,
 }
 
-const NOTION_ENDPOINT: &str = "https://api.notion.com/v1";
-const ZEN_QUOTE_ENDPOINT: &str = "https://zenquotes.io/api";
-
 impl NoteRepo {
-    pub fn new(notion_page: String, notion_key: String) -> Self {
+    pub fn new(
+        notion_endpoint: String,
+        zen_quote_endpoint: String,
+        notion_page: String,
+        notion_key: String,
+    ) -> Self {
         let mut notion_headers = header::HeaderMap::new();
 
         notion_headers.insert(
@@ -31,6 +35,8 @@ impl NoteRepo {
             .unwrap();
 
         Self {
+            notion_endpoint,
+            zen_quote_endpoint,
             notion_page,
             notion_client,
         }
@@ -42,18 +48,21 @@ impl NoteRepo {
             error::ErrorInternalServerError("error request zenquotes.io")
         };
 
-        reqwest::get(format!("{endpoint}/today", endpoint = ZEN_QUOTE_ENDPOINT))
-            .await
-            .map_err(|err| err_reqwest(err))?
-            .json::<ZenQuote>()
-            .await
-            .map_err(|err| err_reqwest(err))
-            .and_then(|q| {
-                let quote = q.first().unwrap();
-                Ok(Note {
-                    content: quote.to_html(),
-                })
+        reqwest::get(format!(
+            "{endpoint}/today",
+            endpoint = self.zen_quote_endpoint
+        ))
+        .await
+        .map_err(|err| err_reqwest(err))?
+        .json::<ZenQuote>()
+        .await
+        .map_err(|err| err_reqwest(err))
+        .and_then(|q| {
+            let quote = q.first().unwrap();
+            Ok(Note {
+                content: quote.to_html(),
             })
+        })
     }
 
     /// Get current task list from Notion filtered by Status `Today`.
@@ -75,7 +84,7 @@ impl NoteRepo {
 
         let url = format!(
             "{endpoint}/databases/{page}/query",
-            endpoint = NOTION_ENDPOINT,
+            endpoint = self.notion_endpoint,
             page = self.notion_page
         );
         self.notion_client
