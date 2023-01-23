@@ -33,18 +33,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match args.command {
         Command::View { view } => {
-            let client = reqwest::Client::new();
             let timestamp = Utc::now().timestamp();
             let message = format!("{}/{}", view.to_string(), timestamp);
             let token = auth_repo.sign_message(&message);
-            // /command/view/{view}/{timestamp}/{token}
+
             let url = format!(
-                "{}/command/view/{}/{}/{}",
-                args.endpoint,
-                view.to_string(),
-                timestamp,
-                token
+                "{endpoint}/command/view/{view}/{timestamp}/{token}",
+                endpoint = args.endpoint,
+                view = view.to_string(),
             );
+
+            let client = reqwest::Client::new();
             let res_text = client.put(url.clone()).send().await?.text().await?;
             println!("{:?}", res_text);
         }

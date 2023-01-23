@@ -1,23 +1,38 @@
+use std::time::Duration;
+
 use crate::domain::{Filter, Note, NotionDbQuery, NotionQueryResponse, QuerySelect, ZenQuote};
 use actix_web::{error, Error};
 use reqwest::header;
 
 pub struct NoteRepo {
     notion_page: String,
-    notion_key: String,
-    notion_endpoint: String,
-    zen_quote_endpoint: String,
+    notion_client: reqwest::Client,
 }
+
+const NOTION_ENDPOINT: &str = "https://api.notion.com/v1";
+const ZEN_QUOTE_ENDPOINT: &str = "https://zenquotes.io/api";
 
 impl NoteRepo {
     pub fn new(notion_page: String, notion_key: String) -> Self {
-        let notion_endpoint = "https://api.notion.com/v1".to_string();
-        let zen_quote_endpoint = "https://zenquotes.io/api".to_string();
+        let mut notion_headers = header::HeaderMap::new();
+
+        notion_headers.insert(
+            "Notion-Version",
+            header::HeaderValue::from_static("2022-02-22"),
+        );
+        let bearer_token = header::HeaderValue::from_str(format!("Bearer {notion_key}").as_str())
+            .expect("cannot convert notion_key to header bearer token");
+        notion_headers.insert(header::AUTHORIZATION, bearer_token);
+
+        let notion_client = reqwest::Client::builder()
+            .default_headers(notion_headers)
+            .timeout(Duration::from_secs(10))
+            .build()
+            .unwrap();
+
         Self {
             notion_page,
-            notion_key,
-            notion_endpoint,
-            zen_quote_endpoint,
+            notion_client,
         }
     }
     /// Get today inspiration quote from zenquotes.io
@@ -27,21 +42,18 @@ impl NoteRepo {
             error::ErrorInternalServerError("error request zenquotes.io")
         };
 
-        reqwest::get(format!(
-            "{endpoint}/today",
-            endpoint = self.zen_quote_endpoint
-        ))
-        .await
-        .map_err(|err| err_reqwest(err))?
-        .json::<ZenQuote>()
-        .await
-        .map_err(|err| err_reqwest(err))
-        .and_then(|q| {
-            let quote = q.first().unwrap();
-            Ok(Note {
-                content: quote.to_html(),
+        reqwest::get(format!("{endpoint}/today", endpoint = ZEN_QUOTE_ENDPOINT))
+            .await
+            .map_err(|err| err_reqwest(err))?
+            .json::<ZenQuote>()
+            .await
+            .map_err(|err| err_reqwest(err))
+            .and_then(|q| {
+                let quote = q.first().unwrap();
+                Ok(Note {
+                    content: quote.to_html(),
+                })
             })
-        })
     }
 
     /// Get current task list from Notion filtered by Status `Today`.
@@ -51,8 +63,6 @@ impl NoteRepo {
             tracing::error!("request api.notion.com: {:?}", err);
             error::ErrorInternalServerError("error request api.notion.com")
         };
-
-        let client = reqwest::Client::new();
 
         let query = NotionDbQuery {
             filter: Filter {
@@ -65,14 +75,12 @@ impl NoteRepo {
 
         let url = format!(
             "{endpoint}/databases/{page}/query",
-            endpoint = self.notion_endpoint,
+            endpoint = NOTION_ENDPOINT,
             page = self.notion_page
         );
-        client
+        self.notion_client
             .post(url)
             .json(&query)
-            .header(header::AUTHORIZATION, format!("Bearer {}", self.notion_key))
-            .header("Notion-Version", "2022-02-22")
             .send()
             .await
             .map_err(|err| err_reqwest(err))?
@@ -87,7 +95,7 @@ impl NoteRepo {
                         let emoji = r.icon.as_ref().map_or_else(
                             || None,
                             |icon| {
-                                if icon["type"] == "emoji".to_owned() {
+                                if icon["type"] == "emoji" {
                                     icon["emoji"].to_string().chars().nth(1)
                                 } else {
                                     None
