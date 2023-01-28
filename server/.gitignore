@@ -17,3 +17,5 @@ Cargo.lock
 /*.vkey
 /*.db
 *.pem
+
+config/local.toml

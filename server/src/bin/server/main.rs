@@ -1,13 +1,13 @@
-use std::net::Ipv4Addr;
+use std::{net::Ipv4Addr, path::PathBuf};
 
 use actix::Actor;
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use clap::Parser;
+use config::Config;
 use env_logger::Env;
-use lazy_static::lazy_static;
+use serde::Deserialize;
 use server::{
-    // application::{change_view, get_note_or_inspire, ws_command},
     application,
     infrastructure::{get_db_pool, AuthRepo, CommandServer, NoteRepo, PlexRepo, TelegramBotRepo},
 };
@@ -16,69 +16,82 @@ use server::{
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
-    /// Notion Task List page
+    /// Config path
     #[clap(long)]
-    notion_page: String,
-
-    /// Notion Read Key
-    #[clap(long)]
-    notion_key: String,
-
-    /// Secret string
-    #[clap(long)]
-    secret: String,
-
-    /// Telegram chat_id
-    #[clap(long)]
-    chat_id: String,
-
-    /// Telegram bot token
-    #[clap(long)]
-    bot_token: String,
-
-    /// Environment
-    #[clap(long, default_value = ".env")]
-    env: String,
+    config: PathBuf,
 }
 
-lazy_static! {
-    static ref ADDR: String = std::env::var("ADDR").unwrap();
-    static ref PORT: String = std::env::var("PORT").unwrap();
-    static ref DATABASE_URL: String = std::env::var("DATABASE_URL").unwrap();
-    static ref NOTION_ENDPOINT: String = std::env::var("NOTION_ENDPOINT").unwrap();
-    static ref ZEN_QUOTE_ENDPOINT: String = std::env::var("ZEN_QUOTE_ENDPOINT").unwrap();
-    static ref TELEGRAM_ENDPOINT: String = std::env::var("TELEGRAM_ENDPOINT").unwrap();
+#[derive(Debug, Deserialize)]
+struct AppConfig {
+    #[serde(rename = "ADDR")]
+    addr: String,
+
+    #[serde(rename = "PORT")]
+    port: String,
+
+    #[serde(rename = "SECRET")]
+    secret: String,
+
+    #[serde(rename = "DATABASE_URL")]
+    database_url: String,
+
+    #[serde(rename = "ZEN_QUOTE_ENDPOINT")]
+    zen_quote_endpoint: String,
+
+    #[serde(rename = "NOTION_ENDPOINT")]
+    notion_endpoint: String,
+
+    #[serde(rename = "NOTION_PAGE")]
+    notion_page: String,
+
+    #[serde(rename = "NOTION_KEY")]
+    notion_key: String,
+
+    #[serde(rename = "TELEGRAM_ENDPOINT")]
+    telegram_endpoint: String,
+
+    #[serde(rename = "CHAT_ID")]
+    chat_id: String,
+
+    #[serde(rename = "BOT_TOKEN")]
+    bot_token: String,
+
+    #[serde(rename = "PLEX_IGNORE_ADDRESSES")]
+    plex_ignore_addresses: Vec<String>,
 }
 
 #[actix_web::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::init_from_env(Env::default().default_filter_or("debug"));
     let args = Args::parse();
+    let config_path = args.config.to_str().unwrap();
 
-    dotenv::from_filename(args.env).expect("cannot load env file");
-    env_logger::init_from_env(Env::default().default_filter_or("info"));
+    let settings = Config::builder()
+        .add_source(config::File::with_name(config_path))
+        .build()
+        .expect("cannot parse config");
+    let settings = settings.try_deserialize::<AppConfig>().unwrap();
+    tracing::debug!("{:?}", settings);
 
-    let pool = get_db_pool(DATABASE_URL.to_string());
+    let pool = get_db_pool(settings.database_url);
 
-    let addr: Ipv4Addr = ADDR.to_string().parse().expect("cannot parse Ipv4Addr");
-    let port = PORT
-        .to_string()
-        .parse::<u16>()
-        .expect("port must be integer");
+    let addr: Ipv4Addr = settings.addr.parse().expect("cannot parse Ipv4Addr");
+    let port = settings.port.parse::<u16>().expect("port must be integer");
     tracing::info!("Serving {}:{}", addr, port);
 
-    let auth_repo = web::Data::new(AuthRepo::new(args.secret));
+    let auth_repo = web::Data::new(AuthRepo::new(settings.secret));
     let note_repo = web::Data::new(NoteRepo::new(
-        NOTION_ENDPOINT.to_string(),
-        ZEN_QUOTE_ENDPOINT.to_string(),
-        args.notion_page,
-        args.notion_key,
+        settings.notion_endpoint,
+        settings.zen_quote_endpoint,
+        settings.notion_page,
+        settings.notion_key,
     ));
     let telegram_repo = web::Data::new(TelegramBotRepo::new(
-        TELEGRAM_ENDPOINT.to_string(),
-        args.chat_id,
-        args.bot_token,
+        settings.telegram_endpoint,
+        settings.chat_id,
+        settings.bot_token,
     ));
-    let plex_token_repo = web::Data::new(PlexRepo::new(pool));
+    let plex_token_repo = web::Data::new(PlexRepo::new(pool, settings.plex_ignore_addresses));
     let command_server = web::Data::new(CommandServer::new().start());
 
     let server = HttpServer::new(move || {

@@ -6,11 +6,17 @@ use diesel::{prelude::*, QueryDsl, RunQueryDsl};
 
 pub struct PlexRepo {
     pool: Pool,
+    ignore_addresses: Vec<String>,
 }
 
 impl PlexRepo {
-    pub fn new(pool: Pool) -> Self {
-        Self { pool }
+    pub fn new(pool: Pool, ignore_addresses: Vec<String>) -> Self {
+        let mut ignore_addresses = ignore_addresses.clone();
+        ignore_addresses.sort();
+        Self {
+            pool,
+            ignore_addresses,
+        }
     }
 
     pub fn insert_plex_hook_token(&self) -> Result<PlexHookToken, Error> {
@@ -37,5 +43,11 @@ impl PlexRepo {
                 tracing::error!("request db error: {:?}", err);
                 error::ErrorNotFound("not found")
             })
+    }
+
+    pub fn check_ignore_address(&self, addr: &str) -> bool {
+        self.ignore_addresses
+            .binary_search(&addr.to_string())
+            .is_ok()
     }
 }

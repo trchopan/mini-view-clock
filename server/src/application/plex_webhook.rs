@@ -18,20 +18,20 @@ pub struct NewPlexTokenPayload {
 // POST "/plex/new-token",
 pub async fn new_plex_token(
     auth_repo: web::Data<AuthRepo>,
-    plex_token_repo: web::Data<PlexRepo>,
+    plex_repo: web::Data<PlexRepo>,
     payload: web::Json<NewPlexTokenPayload>,
 ) -> Result<HttpResponse, Error> {
     let message = payload.timestamp.to_string();
     auth_repo.verify_message(&payload.signature, &message, payload.timestamp)?;
 
-    let token = plex_token_repo.insert_plex_hook_token()?;
+    let token = plex_repo.insert_plex_hook_token()?;
 
     Ok(HttpResponse::Ok().body(token.token.to_string()))
 }
 
 // POST "/plex/hook/{token}",
 pub async fn plex_webhook(
-    plex_token_repo: web::Data<PlexRepo>,
+    plex_repo: web::Data<PlexRepo>,
     telegram_repo: web::Data<TelegramBotRepo>,
     path: web::Path<String>,
     mut multipart: Multipart,
@@ -39,7 +39,7 @@ pub async fn plex_webhook(
     let token = path.into_inner();
     tracing::debug!("token: {:?}", token);
 
-    let plex_hook_token = plex_token_repo.select_plex_hook_token(token)?;
+    let plex_hook_token = plex_repo.select_plex_hook_token(token)?;
     tracing::debug!("found plex_hook_token: {:?}", plex_hook_token);
 
     let mut payload: Option<PlexWebhookEvent> = None;
@@ -81,10 +81,17 @@ pub async fn plex_webhook(
 
     let player = event.player.unwrap();
     tracing::debug!("Player {:?}", player);
+
+    let player_address = player.public_address.unwrap_or("".to_string());
+    if plex_repo.check_ignore_address(&player_address) {
+        tracing::info!("Player address is ignored");
+        return Ok(HttpResponse::new(StatusCode::OK));
+    }
+
     let msg_player = format!(
         "Player {title} - Address {public_address}",
         title = player.title.unwrap_or(unknown()),
-        public_address = player.public_address.unwrap_or(unknown()),
+        public_address = player_address,
     );
 
     let msg = vec![msg_playing, msg_summary, msg_player].join("\n");

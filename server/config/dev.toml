@@ -1,0 +1,16 @@
+ADDR = "127.0.0.1"
+PORT = 5001
+DATABASE_URL = "./dev.db"
+SECRET = ""
+
+ZEN_QUOTE_ENDPOINT = "https://zenquotes.io/api"
+
+NOTION_ENDPOINT = "https://api.notion.com/v1"
+NOTION_PAGE = ""
+NOTION_KEY = ""
+
+TELEGRAM_ENDPOINT = "https://api.telegram.org"
+CHAT_ID = ""
+BOT_TOKEN = ""
+
+PLEX_IGNORE_ADDRESSES = []
