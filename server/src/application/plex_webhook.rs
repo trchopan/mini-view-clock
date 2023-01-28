@@ -69,16 +69,25 @@ pub async fn plex_webhook(
     // Event is "media.play"
 
     let meta = event.metadata.unwrap();
-    tracing::debug!("Payload {:?}", meta);
+    tracing::debug!("Meta {:?}", meta);
     let unknown = || "<unknown>".to_string();
-
-    let msg = format!(
-        "Playing: {title} {year}\nType: {type}\nSummary: {summary}",
+    let msg_playing = format!("Playing {type}: {title} {year}",
+        type=meta.metadata_type.unwrap_or(unknown()),
         title=meta.title.unwrap_or(unknown()),
         year=meta.year.map(|y| format!("({y})")).unwrap_or(unknown()),
-        type=meta.metadata_type.unwrap_or(unknown()),
-        summary=meta.summary.unwrap_or(unknown()),
     );
+
+    let msg_summary = meta.summary.unwrap_or(unknown());
+
+    let player = event.player.unwrap();
+    tracing::debug!("Player {:?}", player);
+    let msg_player = format!(
+        "Player {title} - Address {public_address}",
+        title = player.title.unwrap_or(unknown()),
+        public_address = player.public_address.unwrap_or(unknown()),
+    );
+
+    let msg = vec![msg_playing, msg_summary, msg_player].join("\n");
 
     match telegram_repo.send_markdown(msg).await {
         Err(err) => Err(error::ErrorBadRequest(err)),

@@ -1,3 +1,5 @@
+use std::net::Ipv4Addr;
+
 use actix::Actor;
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
@@ -7,9 +9,7 @@ use lazy_static::lazy_static;
 use server::{
     // application::{change_view, get_note_or_inspire, ws_command},
     application,
-    infrastructure::{
-        get_db_pool, AuthRepo, CommandServer, NoteRepo, PlexRepo, TelegramBotRepo,
-    },
+    infrastructure::{get_db_pool, AuthRepo, CommandServer, NoteRepo, PlexRepo, TelegramBotRepo},
 };
 
 /// Server to serve the mini-view-web
@@ -54,16 +54,16 @@ lazy_static! {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    dotenv::from_filename(args.env).expect("Cannot load env file");
+    dotenv::from_filename(args.env).expect("cannot load env file");
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
     let pool = get_db_pool(DATABASE_URL.to_string());
 
-    let addr = ADDR.to_string();
+    let addr: Ipv4Addr = ADDR.to_string().parse().expect("cannot parse Ipv4Addr");
     let port = PORT
         .to_string()
         .parse::<u16>()
-        .expect("Port must be integer");
+        .expect("port must be integer");
     tracing::info!("Serving {}:{}", addr, port);
 
     let auth_repo = web::Data::new(AuthRepo::new(args.secret));

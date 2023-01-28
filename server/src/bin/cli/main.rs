@@ -1,5 +1,6 @@
 use chrono::Utc;
 use clap::{Parser, Subcommand};
+use reqwest::RequestBuilder;
 use server::{
     application::plex_webhook::NewPlexTokenPayload, domain::View, infrastructure::AuthRepo,
 };
@@ -27,8 +28,17 @@ enum Command {
     NewPlexToken,
 }
 
+async fn send_and_handle_request_text(req: RequestBuilder) -> String {
+    req.send()
+        .await
+        .expect("cannot send request")
+        .text()
+        .await
+        .expect("cannot parse response text")
+}
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() {
     let args = Args::parse();
     let auth_repo = AuthRepo {
         secret: args.secret,
@@ -47,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
 
             let client = reqwest::Client::new();
-            let res_text = client.put(url.clone()).send().await?.text().await?;
+            let res_text = send_and_handle_request_text(client.put(url)).await;
             println!("{:?}", res_text);
         }
         Command::NewPlexToken => {
@@ -61,16 +71,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let url = format!("{endpoint}/plex/new-token", endpoint = args.endpoint);
 
             let client = reqwest::Client::new();
-            let res_text = client
-                .post(url.clone())
-                .json(&payload)
-                .send()
-                .await?
-                .text()
-                .await?;
+            let res_text =
+                send_and_handle_request_text(client.post(url.clone()).json(&payload)).await;
             println!("{:?}", res_text);
         }
     }
-
-    Ok(())
 }
