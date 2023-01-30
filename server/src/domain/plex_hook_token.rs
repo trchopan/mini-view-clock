@@ -14,10 +14,10 @@ pub struct PlexHookToken {
 }
 
 impl PlexHookToken {
-    pub fn new() -> Self {
+    pub fn new_token(len: usize) -> Self {
         let token: String = rand::thread_rng()
             .sample_iter(&MyBase64)
-            .take(16)
+            .take(len)
             .map(char::from)
             .collect();
         Self {

@@ -1,23 +1,21 @@
 use std::time::Duration;
 
-use crate::domain::{Filter, Note, NotionDbQuery, NotionQueryResponse, QuerySelect, ZenQuote};
-use actix_web::{error, Error};
+use crate::domain::{Filter, NoteHeader, NotionDbQuery, NotionQueryResponse, QuerySelect};
 use reqwest::header;
+
+#[derive(Debug)]
+pub enum NoteRepoError {
+    NotionAPIError,
+}
 
 pub struct NoteRepo {
     notion_endpoint: String,
-    zen_quote_endpoint: String,
     notion_page: String,
     notion_client: reqwest::Client,
 }
 
 impl NoteRepo {
-    pub fn new(
-        notion_endpoint: String,
-        zen_quote_endpoint: String,
-        notion_page: String,
-        notion_key: String,
-    ) -> Self {
+    pub fn new(notion_endpoint: String, notion_page: String, notion_key: String) -> Self {
         let mut notion_headers = header::HeaderMap::new();
 
         notion_headers.insert(
@@ -36,41 +34,17 @@ impl NoteRepo {
 
         Self {
             notion_endpoint,
-            zen_quote_endpoint,
             notion_page,
             notion_client,
         }
     }
-    /// Get today inspiration quote from zenquotes.io
-    pub async fn get_inspire_note(&self) -> Result<Note, Error> {
-        let err_reqwest = |err: reqwest::Error| {
-            tracing::error!("request zenquotes.io: {:?}", err);
-            error::ErrorInternalServerError("error request zenquotes.io")
-        };
-
-        reqwest::get(format!(
-            "{endpoint}/today",
-            endpoint = self.zen_quote_endpoint
-        ))
-        .await
-        .map_err(err_reqwest)?
-        .json::<ZenQuote>()
-        .await
-        .map_err(err_reqwest)
-        .map(|q| {
-            let quote = q.first().unwrap();
-            Note {
-                content: quote.to_html(),
-            }
-        })
-    }
 
     /// Get current task list from Notion filtered by Status `Today`.
     /// If there is some tasks, convert them to HTML.
-    pub async fn get_notion_tasklist(&self) -> Result<Note, Error> {
+    pub async fn get_notion_tasklist(&self) -> Result<Vec<NoteHeader>, NoteRepoError> {
         let err_reqwest = |err: reqwest::Error| {
             tracing::error!("request api.notion.com: {:?}", err);
-            error::ErrorInternalServerError("error request api.notion.com")
+            NoteRepoError::NotionAPIError
         };
 
         let query = NotionDbQuery {
@@ -87,6 +61,7 @@ impl NoteRepo {
             endpoint = self.notion_endpoint,
             page = self.notion_page
         );
+
         self.notion_client
             .post(url)
             .json(&query)
@@ -96,31 +71,26 @@ impl NoteRepo {
             .json::<NotionQueryResponse>()
             .await
             .map_err(err_reqwest)
-            .and_then(|q| {
-                let headers: Vec<(Option<char>, String)> = q
+            .map(|query_response| {
+                query_response
                     .results
                     .iter()
                     .map(|r| {
-                        let emoji = r.icon.as_ref().map_or_else(
-                            || None,
-                            |icon| {
-                                if icon["type"] == "emoji" {
-                                    icon["emoji"].to_string().chars().nth(1)
-                                } else {
-                                    None
-                                }
-                            },
-                        );
+                        let emoji = r.icon.as_ref().and_then(|icon| {
+                            if icon["type"] == "emoji" {
+                                icon["emoji"].to_string().chars().nth(1)
+                            } else {
+                                None
+                            }
+                        });
                         let plain_text =
                             r.properties.name.title.first().unwrap().plain_text.clone();
-                        (emoji, plain_text)
+                        NoteHeader {
+                            emoji,
+                            content: plain_text,
+                        }
                     })
-                    .collect();
-                if headers.is_empty() {
-                    Err(error::ErrorNotFound("empty results from notion"))
-                } else {
-                    Ok(Note::from_headers_to_html(headers))
-                }
+                    .collect::<Vec<NoteHeader>>()
             })
     }
 }

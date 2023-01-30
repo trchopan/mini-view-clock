@@ -1,11 +1,8 @@
 mod command;
 pub use command::*;
 
-mod note;
-pub use note::*;
-
-mod zen_quote;
-pub use zen_quote::*;
+mod note_header;
+pub use note_header::*;
 
 mod notion;
 pub use notion::*;

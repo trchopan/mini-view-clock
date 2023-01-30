@@ -3,8 +3,6 @@ PORT = 5001
 DATABASE_URL = "./dev.db"
 SECRET = ""
 
-ZEN_QUOTE_ENDPOINT = "https://zenquotes.io/api"
-
 NOTION_ENDPOINT = "https://api.notion.com/v1"
 NOTION_PAGE = ""
 NOTION_KEY = ""

@@ -16,3 +16,8 @@ export const strToView = (s: string) => {
     }[s] || throwError('cannot convert string to View')
   )
 }
+
+export interface NoteHeader {
+  emoji: string | null
+  content: string
+}

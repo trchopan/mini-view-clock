@@ -35,9 +35,6 @@ struct AppConfig {
     #[serde(rename = "DATABASE_URL")]
     database_url: String,
 
-    #[serde(rename = "ZEN_QUOTE_ENDPOINT")]
-    zen_quote_endpoint: String,
-
     #[serde(rename = "NOTION_ENDPOINT")]
     notion_endpoint: String,
 
@@ -82,7 +79,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let auth_repo = web::Data::new(AuthRepo::new(settings.secret));
     let note_repo = web::Data::new(NoteRepo::new(
         settings.notion_endpoint,
-        settings.zen_quote_endpoint,
         settings.notion_page,
         settings.notion_key,
     ));
@@ -118,8 +114,8 @@ fn routes(cfg: &mut web::ServiceConfig) {
         web::scope("")
             // Get daily org note or inspire quote
             .route(
-                "/note-or-inspire",
-                web::get().to(application::get_note::get_note_or_inspire),
+                "/notes",
+                web::get().to(application::get_note::get_notes),
             )
             // Websocket endpoint to listen to command server
             .route(

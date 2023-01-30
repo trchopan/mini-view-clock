@@ -2,35 +2,39 @@
   import Clock from './Clock.svelte'
   import axios from 'axios'
   import {onDestroy, onMount} from 'svelte'
+  import type {NoteHeader} from './types'
 
   let text = ''
   let isLoading = false
+  const toRank = (s: string) => {
+    if (s.toLowerCase().includes('[work]')) return 2
+    if (s.toLowerCase().includes('[video]')) return 1
+    return 0
+  }
+  const shouldHighlight = (content: string) => {
+    const highlightKeywords = ['[Work]']
+    return highlightKeywords.find(keyword => content.includes(keyword))
+  }
   const getNote = async () => {
     isLoading = true
     try {
       const server = import.meta.env.VITE_SERVER
-      const {data} = await axios.get(server + '/note-or-inspire')
-      text = data.content
+      const {data} = await axios.get<NoteHeader[]>(server + '/notes')
+      text = data
+        .map(n => ({...n, rank: toRank(n.content)}))
+        .sort((a, b) => (a.content > b.content ? 1 : -1))
+        .sort((a, b) => b.rank - a.rank)
+        .map(n => {
+          const emoji = n.emoji ? `<span class="emoji">${n.emoji}</span>` : ''
+          const highlight = shouldHighlight(n.content) ? 'header-highlight' : ''
+          return `<h2 class="org-h2 ${highlight}">${emoji}${n.content}</h2>`
+        })
+        .join('\n')
     } catch (err) {
       console.error('Error getting daily note', err)
     } finally {
       isLoading = false
     }
-  }
-
-  $: headers = () => {
-    const doc = document.createElement('html')
-    doc.innerHTML = text
-    const h = doc.getElementsByTagName('h2')
-    const children = []
-    for (let i = 0; i < h.length; i++) {
-      const child = h.item(i)
-      children.push({
-        id: child.id,
-        text: child.innerText,
-      })
-    }
-    return children
   }
 
   let interval = []
@@ -41,9 +45,9 @@
         fn: () => {
           getNote()
         },
-        interval: import.meta.env.VITE_NOTE_REFRESH_INTERVAL * 1000,
+        duration: import.meta.env.VITE_NOTE_REFRESH_INTERVAL * 1000,
       },
-    ].map(i => setInterval(i.fn, i.interval))
+    ].map(i => setInterval(i.fn, i.duration))
   })
 
   onDestroy(() => {

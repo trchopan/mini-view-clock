@@ -6,7 +6,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     domain::PlexWebhookEvent,
-    infrastructure::{AuthRepo, PlexRepo, TelegramBotRepo},
+    infrastructure::{
+        AuthRepo, PlexRepo, PlexRepoInsertError, PlexRepoSelectError, TelegramBotRepo,
+    },
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -24,9 +26,17 @@ pub async fn new_plex_token(
     let message = payload.timestamp.to_string();
     auth_repo.verify_message(&payload.signature, &message, payload.timestamp)?;
 
-    let token = plex_repo.insert_plex_hook_token()?;
-
-    Ok(HttpResponse::Ok().body(token.token.to_string()))
+    match plex_repo.insert_plex_hook_token() {
+        Err(err) => match err {
+            PlexRepoInsertError::DbError => {
+                tracing::error!("insert plex hook token error: {:?}", err);
+                Err(error::ErrorInternalServerError(
+                    "cannot insert plex hook token",
+                ))
+            }
+        },
+        Ok(token) => Ok(HttpResponse::Ok().body(token.token)),
+    }
 }
 
 // POST "/plex/hook/{token}",
@@ -39,7 +49,14 @@ pub async fn plex_webhook(
     let token = path.into_inner();
     tracing::debug!("token: {:?}", token);
 
-    let plex_hook_token = plex_repo.select_plex_hook_token(token)?;
+    let plex_hook_token = match plex_repo.select_plex_hook_token(token) {
+        Err(err) => match err {
+            PlexRepoSelectError::NotFound => {
+                return Err(error::ErrorNotFound("need correct token to proceed"));
+            }
+        },
+        Ok(token) => token,
+    };
     tracing::debug!("found plex_hook_token: {:?}", plex_hook_token);
 
     let mut payload: Option<PlexWebhookEvent> = None;
@@ -59,7 +76,7 @@ pub async fn plex_webhook(
 
     let Some(event) = payload else { return Err(error::ErrorBadRequest("no event")); };
 
-    let event_name = event.event.unwrap_or("unknown-event".to_owned());
+    let event_name = event.event.unwrap_or_else(|| "unknown-event".to_owned());
 
     if event_name != "media.play" {
         tracing::info!("Nothing to handle for event: {}", event_name);
@@ -72,26 +89,26 @@ pub async fn plex_webhook(
     tracing::debug!("Meta {:?}", meta);
     let unknown = || "<unknown>".to_string();
     let msg_playing = format!("Playing {type}: {title} {year}",
-        type=meta.metadata_type.unwrap_or(unknown()),
-        title=meta.title.unwrap_or(unknown()),
-        year=meta.year.map(|y| format!("({y})")).unwrap_or(unknown()),
+        type=meta.metadata_type.unwrap_or_else(unknown),
+        title=meta.title.unwrap_or_else(unknown),
+        year=meta.year.map(|y| format!("({y})")).unwrap_or_else(unknown),
     );
 
-    let msg_summary = meta.summary.unwrap_or(unknown());
+    let msg_summary = meta.summary.unwrap_or_else(unknown);
 
     let player = event.player.unwrap();
     tracing::debug!("Player {:?}", player);
 
-    let player_address = player.public_address.unwrap_or("".to_string());
+    let player_address = player.public_address.unwrap_or_default();
     if plex_repo.check_ignore_address(&player_address) {
-        tracing::info!("Player address is ignored");
+        tracing::info!("Player address {} is ignored", player_address);
         return Ok(HttpResponse::new(StatusCode::OK));
     }
 
     let msg_player = format!(
-        "Player {title} - Address {public_address}",
-        title = player.title.unwrap_or(unknown()),
-        public_address = player_address,
+        "Player {title} - Address {player_address}",
+        title = player.title.unwrap_or_else(unknown),
+        player_address = player_address,
     );
 
     let msg = vec![msg_playing, msg_summary, msg_player].join("\n");

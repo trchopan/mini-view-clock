@@ -116,3 +116,7 @@ button {
 .org-p5 {
   padding-left: var(--pad-4);
 }
+
+.header-highlight {
+  color: var(--hightlight);
+}
