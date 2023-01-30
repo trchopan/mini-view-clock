@@ -1,9 +1,7 @@
 use chrono::Utc;
 use clap::{Parser, Subcommand};
 use reqwest::RequestBuilder;
-use server::{
-    application::plex_webhook::NewPlexTokenPayload, domain::View, infrastructure::AuthRepo,
-};
+use server::{domain::View, infrastructure::AuthRepo};
 
 /// Client to send the command with given secret
 #[derive(Parser, Debug)]
@@ -25,7 +23,6 @@ struct Args {
 #[derive(Debug, Subcommand)]
 enum Command {
     View { view: View },
-    NewPlexToken,
 }
 
 async fn send_and_handle_request_text(req: RequestBuilder) -> String {
@@ -58,21 +55,6 @@ async fn main() {
 
             let client = reqwest::Client::new();
             let res_text = send_and_handle_request_text(client.put(url)).await;
-            println!("{:?}", res_text);
-        }
-        Command::NewPlexToken => {
-            let timestamp = Utc::now().timestamp();
-            let message = timestamp.to_string();
-            let payload = NewPlexTokenPayload {
-                timestamp,
-                signature: auth_repo.sign_message(&message),
-            };
-
-            let url = format!("{endpoint}/plex/new-token", endpoint = args.endpoint);
-
-            let client = reqwest::Client::new();
-            let res_text =
-                send_and_handle_request_text(client.post(url.clone()).json(&payload)).await;
             println!("{:?}", res_text);
         }
     }

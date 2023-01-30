@@ -9,7 +9,7 @@ use env_logger::Env;
 use serde::Deserialize;
 use server::{
     application,
-    infrastructure::{get_db_pool, AuthRepo, CommandServer, NoteRepo, PlexRepo, TelegramBotRepo},
+    infrastructure::{AuthRepo, CommandServer, NoteRepo, PlexRepo, TelegramBotRepo},
 };
 
 /// Server to serve the mini-view-web
@@ -32,9 +32,6 @@ struct AppConfig {
     #[serde(rename = "SECRET")]
     secret: String,
 
-    #[serde(rename = "DATABASE_URL")]
-    database_url: String,
-
     #[serde(rename = "NOTION_ENDPOINT")]
     notion_endpoint: String,
 
@@ -53,6 +50,9 @@ struct AppConfig {
     #[serde(rename = "BOT_TOKEN")]
     bot_token: String,
 
+    #[serde(rename = "PLEX_WEBHOOK_TOKEN")]
+    plex_webhook_token: String,
+
     #[serde(rename = "PLEX_IGNORE_ADDRESSES")]
     plex_ignore_addresses: Vec<String>,
 }
@@ -70,8 +70,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let settings = settings.try_deserialize::<AppConfig>().unwrap();
     tracing::debug!("{:?}", settings);
 
-    let pool = get_db_pool(settings.database_url);
-
     let addr: Ipv4Addr = settings.addr.parse().expect("cannot parse Ipv4Addr");
     let port = settings.port.parse::<u16>().expect("port must be integer");
     tracing::info!("Serving {}:{}", addr, port);
@@ -87,7 +85,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         settings.chat_id,
         settings.bot_token,
     ));
-    let plex_token_repo = web::Data::new(PlexRepo::new(pool, settings.plex_ignore_addresses));
+    let plex_token_repo = web::Data::new(PlexRepo::new(
+        settings.plex_webhook_token,
+        settings.plex_ignore_addresses,
+    ));
     let command_server = web::Data::new(CommandServer::new().start());
 
     let server = HttpServer::new(move || {
@@ -113,10 +114,7 @@ fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("")
             // Get daily org note or inspire quote
-            .route(
-                "/notes",
-                web::get().to(application::get_note::get_notes),
-            )
+            .route("/notes", web::get().to(application::get_note::get_notes))
             // Websocket endpoint to listen to command server
             .route(
                 "/ws_command",
@@ -126,10 +124,6 @@ fn routes(cfg: &mut web::ServiceConfig) {
             .route(
                 "/command/view/{view}/{timestamp}/{token}",
                 web::put().to(application::command::change_view),
-            )
-            .route(
-                "/plex/new-token",
-                web::post().to(application::plex_webhook::new_plex_token),
             )
             .route(
                 "/plex/hook/{token}",

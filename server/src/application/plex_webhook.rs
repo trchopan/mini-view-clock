@@ -6,37 +6,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     domain::PlexWebhookEvent,
-    infrastructure::{
-        AuthRepo, PlexRepo, PlexRepoInsertError, PlexRepoSelectError, TelegramBotRepo,
-    },
+    infrastructure::{PlexRepo, TelegramBotRepo},
 };
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NewPlexTokenPayload {
     pub timestamp: i64,
     pub signature: String,
-}
-
-// POST "/plex/new-token",
-pub async fn new_plex_token(
-    auth_repo: web::Data<AuthRepo>,
-    plex_repo: web::Data<PlexRepo>,
-    payload: web::Json<NewPlexTokenPayload>,
-) -> Result<HttpResponse, Error> {
-    let message = payload.timestamp.to_string();
-    auth_repo.verify_message(&payload.signature, &message, payload.timestamp)?;
-
-    match plex_repo.insert_plex_hook_token() {
-        Err(err) => match err {
-            PlexRepoInsertError::DbError => {
-                tracing::error!("insert plex hook token error: {:?}", err);
-                Err(error::ErrorInternalServerError(
-                    "cannot insert plex hook token",
-                ))
-            }
-        },
-        Ok(token) => Ok(HttpResponse::Ok().body(token.token)),
-    }
 }
 
 // POST "/plex/hook/{token}",
@@ -49,15 +25,9 @@ pub async fn plex_webhook(
     let token = path.into_inner();
     tracing::debug!("token: {:?}", token);
 
-    let plex_hook_token = match plex_repo.select_plex_hook_token(token) {
-        Err(err) => match err {
-            PlexRepoSelectError::NotFound => {
-                return Err(error::ErrorNotFound("need correct token to proceed"));
-            }
-        },
-        Ok(token) => token,
-    };
-    tracing::debug!("found plex_hook_token: {:?}", plex_hook_token);
+    if !plex_repo.check_token(&token) {
+        return Err(error::ErrorNotFound("need correct token to proceed"));
+    }
 
     let mut payload: Option<PlexWebhookEvent> = None;
 

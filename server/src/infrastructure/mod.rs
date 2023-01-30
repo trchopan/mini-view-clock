@@ -13,8 +13,5 @@ pub use command_server::*;
 mod telegram_repo;
 pub use telegram_repo::*;
 
-mod sqlite_facade;
-pub use sqlite_facade::*;
-
 mod plex_repo;
 pub use plex_repo::*;
