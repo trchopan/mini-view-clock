@@ -6,7 +6,9 @@ workflows:
       - build-server:
           filters:
             branches:
-              only: /server\/.*/
+              only:
+                - /server\/.*/
+                - /web\/.*/
 
 jobs:
   build-server:
