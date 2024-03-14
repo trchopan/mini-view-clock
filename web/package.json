@@ -21,7 +21,8 @@
     "vite": "^4"
   },
   "volta": {
-    "node": "16.17.0"
+    "node": "20.9.0",
+    "yarn": "4.0.2"
   },
   "dependencies": {
     "axios": "^0.27.2",

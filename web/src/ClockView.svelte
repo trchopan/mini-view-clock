@@ -21,6 +21,10 @@
       {id: 'coti', name: 'COTI'},
       {id: 'binancecoin', name: 'BNB'},
       {id: 'polkadot', name: 'DOT'},
+      {id: 'near', name: 'NEAR'},
+      {id: 'solana', name: 'SOL'},
+      {id: 'singularitynet', name: 'AGIX'},
+      {id: 'avalanche-2', name: 'AVAX'},
       {id: 'harmony', name: 'ONE'},
     ]
 
@@ -41,21 +45,10 @@
     coinInfo = coins.map(coin => ({...coin, ...data[coin.id]}))
   }
 
-  let widthPadding = 0
-  $: clockStyle = () => {
-    return `width: calc(100vw - ${widthPadding}rem); height: 100vh;`
-  }
-
   let interval = []
   onMount(async () => {
     getCoins()
     interval = [
-      {
-        fn: () => {
-          widthPadding = Math.random() * 5 + 0.5
-        },
-        interval: import.meta.env.VITE_CLOCK_PADDING_INTERVAL * 1000,
-      },
       {
         fn: () => {
           getCoins()
@@ -71,19 +64,15 @@
 </script>
 
 <div class="clock-container">
-  <div style={clockStyle()}>
-    <Clock />
+  <div class="clock">
+      <Clock />
   </div>
   <div class="coins">
     {#each coinInfo as coin}
       <div class="coin">
         <span>{coin.name}:</span>
         <span>{fmtNumber(coin.usd, 4)}</span>
-        <span
-          style:color={coin.usd_24h_change > 0
-            ? 'var(--secondary)'
-            : 'var(--primary)'}
-        >
+        <span style:color={coin.usd_24h_change > 0 ? '#78d578' : '#ff3636'}>
           {fmtPercent(coin.usd_24h_change)}
         </span>
       </div>
@@ -97,21 +86,28 @@
 <style>
   .clock-container {
     display: flex;
+    flex-direction: column;
+    height: 100%;
     align-items: center;
     justify-content: center;
+    padding: 0 0.5rem;
+    overflow: hidden;
+  }
+  .clock {
+    flex: 1;
+    height: 100%;
   }
   .coins {
-    position: fixed;
-    left: 0.5rem;
-    bottom: 0.5rem;
-    right: 0.5rem;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-row-gap: 0.3rem;
-    grid-column-gap: 0.5rem;
+    grid-row-gap: 0rem;
+    grid-column-gap: 0rem;
+    padding-bottom: 0.5rem;
   }
   .coin {
     font-size: 0.86rem;
+    border: solid 1px #303030;
+    padding: 0.2rem;
   }
   .coin > span {
     margin-right: 0.3rem;
