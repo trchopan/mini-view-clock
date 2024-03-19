@@ -105,7 +105,7 @@
     padding-bottom: 0.5rem;
   }
   .coin {
-    font-size: 0.86rem;
+    font-size: 0.82rem;
     border: solid 1px #303030;
     padding: 0.2rem;
   }
