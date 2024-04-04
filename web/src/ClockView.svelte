@@ -28,7 +28,7 @@
       {id: 'harmony', name: 'ONE'},
     ]
 
-    const promises = async () => {
+    const fetchCoins = async () => {
       try {
         const ids = coins.map(c => c.id).join(',')
         return await axios.get<
@@ -41,11 +41,55 @@
         return null
       }
     }
-    const {data} = await promises()
+
+    const {data} = await fetchCoins()
     coinInfo = coins.map(coin => ({...coin, ...data[coin.id]}))
   }
 
+  const timers = [
+    {text: 'Off', durationMin: -1},
+    {text: '5 min', durationMin: 5},
+    {text: '10 min', durationMin: 10},
+    {text: '15 min', durationMin: 15},
+    {text: '30 min', durationMin: 30},
+  ]
+
+  let currentTimer = timers[0]
+  let currentTimerMark = new Date()
+  let timerActive = false
+  let diffSeconds = -1
+  $: timerDiffStr = () => {
+    const mins = Math.floor(diffSeconds / 60)
+    const secs = Math.floor(diffSeconds % 60)
+    const minsStr = mins ? mins + ' m ' : ''
+    const secsStr = secs ? secs + ' s' : ''
+    return minsStr + secsStr
+  }
+
+  const toggleTimmer = () => {
+    currentTimerMark = new Date()
+    const currentIndex = timers.indexOf(currentTimer)
+    currentTimer =
+      currentIndex >= timers.length - 1 ? timers[0] : timers[currentIndex + 1]
+  }
+
+  const timerTick = () => {
+    if (currentTimer.text === 'Off') {
+      timerActive = false
+      return
+    }
+    diffSeconds = (new Date().getTime() - currentTimerMark.getTime()) / 1000
+    const durationMin = currentTimer.durationMin
+    timerActive = diffSeconds > durationMin * 60
+  }
+
+  const resetTimerMark = () => {
+    currentTimerMark = new Date()
+    timerActive = false
+  }
+
   let interval = []
+
   onMount(async () => {
     getCoins()
     interval = [
@@ -54,6 +98,12 @@
           getCoins()
         },
         interval: import.meta.env.VITE_COIN_REFRESH_INTERVAL * 1000,
+      },
+      {
+        fn: () => {
+          timerTick()
+        },
+        interval: 1000,
       },
     ].map(i => setInterval(i.fn, i.interval))
   })
@@ -65,7 +115,7 @@
 
 <div class="clock-container">
   <div class="clock">
-      <Clock />
+    <Clock />
   </div>
   <div class="coins">
     {#each coinInfo as coin}
@@ -80,6 +130,20 @@
   </div>
   <div class="buttons">
     <button on:click={() => getCoins()}>Coins</button>
+    {#if timerActive}
+      <button class="flash-timer" on:click={() => resetTimerMark()}>
+        Reset
+      </button>
+    {:else}
+      <button on:click={() => toggleTimmer()}>
+        {currentTimer.text}
+        {#if currentTimer.text !== 'Off'}
+          <span class="diff-seconds">
+            {timerDiffStr()}
+          </span>
+        {/if}
+      </button>
+    {/if}
   </div>
 </div>
 
@@ -119,5 +183,30 @@
     display: grid;
     grid-template-columns: 1fr;
     grid-gap: 1rem;
+  }
+  @keyframes flash-timer-animate {
+    0% {
+      color: white;
+      background-color: red;
+    }
+    50% {
+      color: black;
+      background-color: white;
+    }
+    100% {
+      color: white;
+      background-color: red;
+    }
+  }
+  .flash-timer {
+    animation: flash-timer-animate 500ms infinite;
+    position: relative;
+  }
+  .diff-seconds {
+    color: #686868;
+    position: absolute;
+    bottom: -0.3rem;
+    right: 0.5rem;
+    font-size: 0.6rem;
   }
 </style>
