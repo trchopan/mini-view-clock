@@ -41,12 +41,8 @@
         <div class="head cell">{day}</div>
       {/each}
       {#each dates as date}
-        <div
-          class="cell"
-          class:today={isToday(date)}
-          class:weekend={isWeekend(date)}
-        >
-          <div>
+        <div class="cell">
+          <div class:today={isToday(date)} class:weekend={isWeekend(date)}>
             {date?.getDate() || ''}
           </div>
         </div>
@@ -60,7 +56,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8rem;
+    font-size: 2vw;
   }
   .calendar-table {
     display: grid;
@@ -77,8 +73,18 @@
   }
   .today {
     color: #ff3636;
+    font-weight: bold;
+    position: relative;
+  }
+  .today::before {
+    content: '';
+    position: absolute;
+    top: -0.2em;
+    left: -0.25em;
+    right: -0.25em;
+    bottom: -0.2em;
     border-radius: 5px;
-    background-color: #686868;
+    border: 1px solid #ff3636;
   }
   .weekend {
     color: #686868;

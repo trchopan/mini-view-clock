@@ -189,7 +189,7 @@
     top: 0.5rem;
     right: 0.5rem;
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     grid-gap: 1rem;
   }
   @keyframes flash-timer-animate {
