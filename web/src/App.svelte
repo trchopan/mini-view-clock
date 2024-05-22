@@ -39,6 +39,7 @@
     {#if showMenu}
       <ul>
         {#each routes as route}
+          <!-- svelte-ignore a11y-click-events-have-key-events -->
           <li on:click={() => selectView(route.text)}>{route.text}</li>
         {/each}
       </ul>

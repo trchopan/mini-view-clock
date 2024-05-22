@@ -1,7 +1,8 @@
 <script lang="ts">
   import axios from 'axios'
 
-  import {onMount, onDestroy} from 'svelte'
+  import {onDestroy, onMount} from 'svelte'
+  import Calendar from './Calendar.svelte'
   import Clock from './Clock.svelte'
   import {fmtNumber, fmtPercent} from './helpers'
 
@@ -50,8 +51,8 @@
     {text: 'Off', durationMin: -1},
     {text: '5 min', durationMin: 5},
     {text: '10 min', durationMin: 10},
-    {text: '15 min', durationMin: 15},
     {text: '30 min', durationMin: 30},
+    {text: '60 min', durationMin: 60},
   ]
 
   let currentTimer = timers[0]
@@ -81,6 +82,10 @@
     diffSeconds = (new Date().getTime() - currentTimerMark.getTime()) / 1000
     const durationMin = currentTimer.durationMin
     timerActive = diffSeconds > durationMin * 60
+    if (diffSeconds >= (durationMin + 1) * 60) {
+      // Set timer to off after 1 minutes alert
+      currentTimer = timers[0]
+    }
   }
 
   const resetTimerMark = () => {
@@ -116,6 +121,7 @@
 <div class="clock-container">
   <div class="clock">
     <Clock />
+    <Calendar />
   </div>
   <div class="coins">
     {#each coinInfo as coin}
@@ -160,6 +166,8 @@
   .clock {
     flex: 1;
     height: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
   }
   .coins {
     display: grid;
