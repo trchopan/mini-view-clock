@@ -1,6 +1,5 @@
 <script lang="ts">
   import {addMonths, format} from 'date-fns'
-  import {onMount} from 'svelte'
 
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   let current = new Date()

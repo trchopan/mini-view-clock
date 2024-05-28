@@ -2,6 +2,7 @@ export enum View {
   Clock = 'Clock',
   Note = 'Note',
   About = 'About',
+  HandGesture = 'HandGesture',
 }
 
 const throwError = (e: any) => {
