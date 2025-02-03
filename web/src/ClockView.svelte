@@ -20,13 +20,13 @@
       {id: 'matic-network', name: 'MATIC'},
       {id: 'cardano', name: 'ADA'},
       {id: 'coti', name: 'COTI'},
+      {id: 'xrp', name: 'XRP'},
       {id: 'binancecoin', name: 'BNB'},
       {id: 'polkadot', name: 'DOT'},
       {id: 'near', name: 'NEAR'},
       {id: 'solana', name: 'SOL'},
       {id: 'singularitynet', name: 'AGIX'},
       {id: 'avalanche-2', name: 'AVAX'},
-      {id: 'harmony', name: 'ONE'},
     ]
 
     const fetchCoins = async () => {
