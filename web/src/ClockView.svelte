@@ -13,37 +13,57 @@
     usd_24h_change: number
   }[] = []
 
-  const getCoins = async () => {
-    let coins = [
-      {id: 'bitcoin', name: 'BTC'},
-      {id: 'ethereum', name: 'ETH'},
-      {id: 'matic-network', name: 'MATIC'},
-      {id: 'cardano', name: 'ADA'},
-      {id: 'coti', name: 'COTI'},
-      {id: 'xrp', name: 'XRP'},
-      {id: 'binancecoin', name: 'BNB'},
-      {id: 'polkadot', name: 'DOT'},
-      {id: 'near', name: 'NEAR'},
-      {id: 'solana', name: 'SOL'},
-      {id: 'singularitynet', name: 'AGIX'},
-      {id: 'avalanche-2', name: 'AVAX'},
-    ]
+  const coins = [
+    {id: 'bitcoin', name: 'BTC'},
+    {id: 'ethereum', name: 'ETH'},
+    {id: 'matic-network', name: 'MATIC'},
+    {id: 'cardano', name: 'ADA'},
+    {id: 'coti', name: 'COTI'},
+    {id: 'xrp', name: 'XRP'},
+    {id: 'binancecoin', name: 'BNB'},
+    {id: 'polkadot', name: 'DOT'},
+    {id: 'near', name: 'NEAR'},
+    {id: 'solana', name: 'SOL'},
+    {id: 'singularitynet', name: 'AGIX'},
+    {id: 'avalanche-2', name: 'AVAX'},
+  ]
 
-    const fetchCoins = async () => {
+  const fetchCoins = async () => {
+    try {
+      const ids = coins.map(c => c.id).join(',')
+      const {data} = await axios.get<
+        {[key: string]: {usd: number; usd_24h_change: number}}[]
+      >(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
+      )
+      return data
+    } catch (err) {
+      console.error('>>> err getting coin', err)
+      return null
+    }
+  }
+
+  const getCoins = async () => {
+    let data = (() => {
       try {
-        const ids = coins.map(c => c.id).join(',')
-        return await axios.get<
-          {[key: string]: {usd: number; usd_24h_change: number}}[]
-        >(
-          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
-        )
+        const cachedCoins = JSON.parse(localStorage.getItem('cachedCoins'))
+        if (cachedCoins.expires < new Date().getTime()) {
+          return cachedCoins.data
+        } else {
+          return null
+        }
       } catch (err) {
-        console.error('>>> err getting coin', err)
         return null
       }
+    })()
+    if (data == null) {
+      data = await fetchCoins()
+      const cachedCoins = {
+        data,
+        expires: new Date().getTime() + 60 * 60 * 1000,
+      }
+      localStorage.setItem('cachedCoins', JSON.stringify(cachedCoins))
     }
-
-    const {data} = await fetchCoins()
     coinInfo = coins.map(coin => ({...coin, ...data[coin.id]}))
   }
 
@@ -99,15 +119,11 @@
     getCoins()
     interval = [
       {
-        fn: () => {
-          getCoins()
-        },
+        fn: getCoins,
         interval: import.meta.env.VITE_COIN_REFRESH_INTERVAL * 1000,
       },
       {
-        fn: () => {
-          timerTick()
-        },
+        fn: timerTick,
         interval: 1000,
       },
     ].map(i => setInterval(i.fn, i.interval))

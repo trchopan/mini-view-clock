@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
         webView.settings.mediaPlaybackRequiresUserGesture = false;
 
         // this will load the url of the website
-        webView.loadUrl("https://mini-view.web.app/")
+        webView.loadUrl("https://mini-view.chop.dev/")
 
         // this will enable the javascript settings
         webView.settings.javaScriptEnabled = true

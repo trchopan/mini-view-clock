@@ -1,7 +1,6 @@
 <script lang="ts">
     import About from './About.svelte'
     import ClockView from './ClockView.svelte'
-    import HandGesture from './HandGesture.svelte'
     import MenuIcon from './MenuIcon.svelte'
     import NoteView from './NoteView.svelte'
     import {currentView} from './store'
@@ -11,7 +10,6 @@
         {component: ClockView, text: View.Clock},
         {component: NoteView, text: View.Note},
         {component: About, text: View.About},
-        {component: HandGesture, text: View.HandGesture},
     ]
 
     let showMenu = false
