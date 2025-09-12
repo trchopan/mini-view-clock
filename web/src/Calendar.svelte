@@ -17,9 +17,7 @@
 
     const loadDates = (cur: Date) => {
         const datesInMonth = getDaysInMonth(cur.getMonth(), cur.getFullYear())
-        const firstDateIndex = days.findIndex(
-            (_, i) => i === datesInMonth[0].getDay()
-        )
+        const firstDateIndex = days.findIndex((_, i) => i === datesInMonth[0].getDay())
 
         return Array(firstDateIndex).fill(null).concat(datesInMonth)
     }
@@ -32,10 +30,7 @@
 
     const isToday = (date: Date | null) => {
         const now = new Date()
-        return (
-            now.getMonth() === date?.getMonth() &&
-            now.getDate() === date?.getDate()
-        )
+        return now.getMonth() === date?.getMonth() && now.getDate() === date?.getDate()
     }
 
     const onToday = () => {
@@ -65,12 +60,8 @@
             <div class="calendar-month">{format(current, 'MMMM yyyy')}</div>
             <div class="calendar-control">
                 <button type="button" on:click={() => onToday()}>Today</button>
-                <button type="button" on:click={() => onMonthAdd(-1)}
-                    >Back</button
-                >
-                <button type="button" on:click={() => onMonthAdd(1)}
-                    >Next</button
-                >
+                <button type="button" on:click={() => onMonthAdd(-1)}>Back</button>
+                <button type="button" on:click={() => onMonthAdd(1)}>Next</button>
             </div>
         </div>
         <div class="calendar-table">
@@ -79,10 +70,7 @@
             {/each}
             {#each dates as date}
                 <div class="cell">
-                    <div
-                        class:today={isToday(date)}
-                        class:weekend={isWeekend(date)}
-                    >
+                    <div class:today={isToday(date)} class:weekend={isWeekend(date)}>
                         {date?.getDate() || ''}
                     </div>
                 </div>
