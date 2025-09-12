@@ -35,11 +35,17 @@
     let currentChartIdx = 0
     let currentChartData: {prices: [number, number][]} | null = null
     let currentChartName: string = coins[0].name
+    let timeframeDays: number = 365
+
+    function setTimeframe(days: number) {
+        timeframeDays = days
+        updateCurrentChart()
+    }
 
     async function updateCurrentChart() {
         const coin = coins[currentChartIdx]
         currentChartName = coin.name
-        const data = await getChart(coin.id, 365)
+        const data = await getChart(coin.id, timeframeDays)
         if (data) {
             currentChartData = data
         } else {
@@ -100,15 +106,19 @@
             if (cacheEntry && cacheEntry.expire > now) {
                 return cacheEntry.data
             }
-            const {data} = await axios.get(
-                `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${days}`
+            // Fetch OHLC data and map to [timestamp, close] format
+            const {data} = await axios.get<any[]>(
+                `https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=usd&days=${days}`
             )
+            // CoinGecko OHLC returns [time, open, high, low, close]
+            const prices = data.map((entry: any[]) => [entry[0], entry[4]] as [number, number])
+            const transformed = {prices}
             cachedCharts[cacheKey] = {
-                data,
+                data: transformed,
                 expire: now + 5 * 60 * 1000,
             }
             localStorage.setItem('cachedChart', JSON.stringify(cachedCharts))
-            return data
+            return transformed
         } catch (err) {
             console.error(`>>> err getting chart for ${coinId}`, err)
             return null
@@ -172,9 +182,23 @@
             {#if currentChartData?.prices}
                 <CoinChart prices={currentChartData.prices} coinName={currentChartName} />
             {/if}
+            <!-- Timeframe buttons moved inside the coinchart-container to appear under the chart -->
+            <div
+                class="timeframe-buttons"
+                style="display:flex; gap:.5rem; padding: .5rem 0; align-items: center;"
+            >
+                <button on:click={() => setTimeframe(90)} class:selected={timeframeDays === 90}
+                    >3M</button
+                >
+                <button on:click={() => setTimeframe(180)} class:selected={timeframeDays === 180}
+                    >6M</button
+                >
+                <button on:click={() => setTimeframe(365)} class:selected={timeframeDays === 365}
+                    >1Y</button
+                >
+            </div>
         </div>
     </div>
-    <!-- Timer and Coins refresh buttons removed -->
 </div>
 
 <style>
@@ -257,6 +281,7 @@
         flex: 3;
         max-width: 525px;
         display: flex;
+        flex-direction: column;
         align-items: center;
         box-sizing: border-box;
         padding: 0.5rem 0.75rem;
@@ -276,5 +301,23 @@
     }
     .coin > span {
         margin-right: 0.3rem;
+    }
+    .timeframe-buttons {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.25rem 0;
+    }
+    .timeframe-buttons button {
+        background: transparent;
+        border: 1px solid #303030;
+        color: inherit;
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+    .timeframe-buttons button.selected {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: #6ba7ff;
     }
 </style>

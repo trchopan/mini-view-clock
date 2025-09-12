@@ -39,7 +39,7 @@
         }
 
         // Prepare data for Chart.js
-        const labels = prices.map(p => dayjs(p[0]).format('MMM DD, HH:mm')) // Format timestamp for x-axis labels
+        const labels = prices.map(p => dayjs(p[0]).format('YYYY MMM DD')) // Format timestamp for x-axis labels
         const data = prices.map(p => p[1]) // Prices for y-axis
 
         chart = new Chart(canvasElement, {
@@ -124,7 +124,9 @@
     })
 </script>
 
-<canvas bind:this={canvasElement}></canvas>
+<div style="width: 100%; height: 100%;">
+    <canvas bind:this={canvasElement}></canvas>
+</div>
 
 <style>
     /* Ensure the canvas fills its container */
