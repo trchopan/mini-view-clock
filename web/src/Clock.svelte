@@ -1,23 +1,25 @@
 <script lang="ts">
     import {onDestroy, onMount} from 'svelte'
-    import {format} from 'date-fns'
+    import dayjs from 'dayjs'
 
     let dateStr = ''
     let timeStr = ''
     let secondStr = ''
-    let intervalID = null
+    let interval: number | null = null
 
     onMount(() => {
-        intervalID = setInterval(() => {
+        interval = setInterval(() => {
             const now = new Date()
-            dateStr = format(now, 'EEE, dd-MM-yyyy')
-            timeStr = format(now, 'HH:mm')
-            secondStr = format(now, 'ss')
+            dateStr = dayjs(now).format('ddd, DD-MM-YYYY')
+            timeStr = dayjs(now).format('HH:mm')
+            secondStr = dayjs(now).format('ss')
         }, 1000)
     })
 
     onDestroy(() => {
-        clearInterval(intervalID)
+        if (interval) {
+            clearInterval(interval)
+        }
     })
 </script>
 

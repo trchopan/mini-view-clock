@@ -124,14 +124,6 @@
     })
 </script>
 
-<div style="width: 100%; height: 100%;">
+<div class="w-full h-full">
     <canvas bind:this={canvasElement}></canvas>
 </div>
-
-<style>
-    /* Ensure the canvas fills its container */
-    canvas {
-        width: 100%;
-        height: 100%;
-    }
-</style>
