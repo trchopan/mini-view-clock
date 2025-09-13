@@ -161,7 +161,7 @@
         <div class="coins-container">
             {#each coinInfo as coin, i}
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
+                <button
                     class="coin"
                     on:click={() => {
                         currentChartIdx = i
@@ -175,7 +175,7 @@
                     <span style:color={coin.usd_24h_change > 0 ? '#78d578' : '#ff3636'}>
                         {fmtPercent(coin.usd_24h_change)}
                     </span>
-                </div>
+                </button>
             {/each}
         </div>
         <div class="coinchart-container">
