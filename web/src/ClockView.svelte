@@ -192,17 +192,17 @@
 
 <div class="h-screen text-white">
     <div class="grid grid-cols-2 grid-rows-2 h-full">
-        <div class="col-span-1 row-span-1 p-4 flex items-center justify-center">
+        <div class="col-span-1 row-span-1 p-1 flex items-center justify-center">
             <Clock />
         </div>
-        <div class="col-span-1 row-span-1 p-1 md:p-4 flex items-center justify-center">
+        <div class="col-span-1 row-span-1 p-1 flex items-center justify-center">
             <Calendar />
         </div>
-        <div class="col-span-1 row-span-1 p-4 overflow-y-auto">
+        <div class="col-span-1 row-span-1 p-1 overflow-y-auto">
             <CoinGrid {coinInfo} {currentChartIdx} {updateCurrentChart} />
         </div>
-        <div class="col-span-1 row-span-1 p-4">
-            <div class="coinchart-container h-full flex flex-col">
+        <div class="col-span-1 row-span-1 p-1">
+            <div class="h-full flex flex-col">
                 {#if currentChartData?.prices}
                     <div>
                         <CoinChart prices={currentChartData.prices} coinName={currentChartName} />

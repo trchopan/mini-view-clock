@@ -54,48 +54,41 @@
     })
 </script>
 
-<div class="flex flex-col items-center justify-center text-xs md:text-base">
-    <div class="w-full">
-        <div class="calendar-month-container flex items-center justify-between mb-1">
-            <div class="calendar-month font-bold text-base">{dayjs(current).format('MMM YYYY')}</div>
-            <div class="calendar-control flex gap-1">
-                <button
-                    class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700"
-                    type="button"
-                    on:click={onToday}>Today</button
-                >
-                <button
-                    class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700"
-                    type="button"
-                    on:click={() => onMonthAdd(-1)}>Back</button
-                >
-                <button
-                    class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700"
-                    type="button"
-                    on:click={() => onMonthAdd(1)}>Next</button
-                >
-            </div>
+<div class="flex gap-2">
+    <div class="flex flex-col items-center p-1 gap-2 mb-1">
+        <div class="font-bold text-base">
+            {dayjs(current).format('MMM YYYY')}
         </div>
+        <div class="flex flex-col gap-1">
+            {#each [{onClick: () => onToday(), label: 'Today'}, {onClick: () => onMonthAdd(-1), label: 'Back'}, {onClick: () => onMonthAdd(1), label: 'Next'}] as item}
+                <button
+                    class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700"
+                    type="button"
+                    on:click={item.onClick}
+                >
+                    {item.label}
+                </button>
+            {/each}
+        </div>
+    </div>
 
-        <div class="grid grid-cols-7 gap-0.5 border-t border-b border-gray-200 pt-1">
-            {#each days as day}
-                <div class="text-center text-gray-500 font-semibold pb-0.5">{day}</div>
-            {/each}
-            {#each dates as date}
-                <div class="cell p-1 flex items-center justify-center">
-                    {#if date}
-                        <div class="relative w-full h-full flex items-center justify-center">
-                            {#if isToday(date)}
-                                <span class="absolute inset-0 rounded-md border-2 border-red-500"
-                                ></span>
-                            {/if}
-                            <span class="relative z-10" class:text-gray-500={isWeekend(date)}>
-                                {dayjs(date).format('D')}
-                            </span>
-                        </div>
-                    {/if}
-                </div>
-            {/each}
-        </div>
+    <div class="grid grid-cols-7 gap-0.5 border-t border-b border-gray-200 pt-1">
+        {#each days as day}
+            <div class="text-center text-sm text-gray-500 font-semibold">{day}</div>
+        {/each}
+        {#each dates as date}
+            <div class="p-1 flex items-center justify-center">
+                {#if date}
+                    <div class="relative w-full h-full flex items-center justify-center">
+                        {#if isToday(date)}
+                            <span class="absolute inset-0 rounded-md border-2 border-red-500" />
+                        {/if}
+                        <span class="relative z-10" class:text-gray-500={isWeekend(date)}>
+                            {dayjs(date).format('D')}
+                        </span>
+                    </div>
+                {/if}
+            </div>
+        {/each}
     </div>
 </div>
