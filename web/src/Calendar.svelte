@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {addMonths, format} from 'date-fns'
+    import dayjs from 'dayjs'
     import {onMount} from 'svelte'
 
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -17,9 +17,7 @@
 
     const loadDates = (cur: Date) => {
         const datesInMonth = getDaysInMonth(cur.getMonth(), cur.getFullYear())
-        const firstDateIndex = days.findIndex(
-            (_, i) => i === datesInMonth[0].getDay()
-        )
+        const firstDateIndex = days.findIndex((_, i) => i === datesInMonth[0].getDay())
 
         return Array(firstDateIndex).fill(null).concat(datesInMonth)
     }
@@ -32,10 +30,7 @@
 
     const isToday = (date: Date | null) => {
         const now = new Date()
-        return (
-            now.getMonth() === date?.getMonth() &&
-            now.getDate() === date?.getDate()
-        )
+        return now.getMonth() === date?.getMonth() && now.getDate() === date?.getDate()
     }
 
     const onToday = () => {
@@ -43,7 +38,7 @@
     }
 
     const onMonthAdd = (d: number) => {
-        current = addMonths(current, d)
+        current = dayjs(current).add(d, 'month').toDate()
     }
 
     onMount(() => {
@@ -59,87 +54,41 @@
     })
 </script>
 
-<div class="calendar">
-    <div>
-        <div class="calendar-month-container">
-            <div class="calendar-month">{format(current, 'MMMM yyyy')}</div>
-            <div class="calendar-control">
-                <button type="button" on:click={() => onToday()}>Today</button>
-                <button type="button" on:click={() => onMonthAdd(-1)}
-                    >Back</button
-                >
-                <button type="button" on:click={() => onMonthAdd(1)}
-                    >Next</button
-                >
-            </div>
+<div class="flex gap-2">
+    <div class="flex flex-col items-center p-1 gap-2 mb-1">
+        <div class="font-bold text-base">
+            {dayjs(current).format('MMM YYYY')}
         </div>
-        <div class="calendar-table">
-            {#each days as day}
-                <div class="head cell">{day}</div>
-            {/each}
-            {#each dates as date}
-                <div class="cell">
-                    <div
-                        class:today={isToday(date)}
-                        class:weekend={isWeekend(date)}
-                    >
-                        {date?.getDate() || ''}
-                    </div>
-                </div>
+        <div class="flex flex-col gap-1">
+            {#each [{onClick: () => onToday(), label: 'Today'}, {onClick: () => onMonthAdd(-1), label: 'Back'}, {onClick: () => onMonthAdd(1), label: 'Next'}] as item}
+                <button
+                    class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700"
+                    type="button"
+                    on:click={item.onClick}
+                >
+                    {item.label}
+                </button>
             {/each}
         </div>
     </div>
-</div>
 
-<style>
-    .calendar {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2vw;
-    }
-    .calendar-month-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .calendar-month {
-        font-weight: bold;
-        padding-left: 0.5em;
-    }
-    .calendar-control {
-        display: flex;
-        gap: 0.5em;
-    }
-    .calendar-table {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-    }
-    .calendar-table > .head {
-        color: #686868;
-    }
-    .calendar-table > .cell {
-        padding: 5px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .today {
-        color: #ff3636;
-        font-weight: bold;
-        position: relative;
-    }
-    .today::before {
-        content: '';
-        position: absolute;
-        top: -0.2em;
-        left: -0.25em;
-        right: -0.25em;
-        bottom: -0.2em;
-        border-radius: 5px;
-        border: 1px solid #ff3636;
-    }
-    .weekend {
-        color: #686868;
-    }
-</style>
+    <div class="grid grid-cols-7 gap-0.5 border-t border-b border-gray-200 pt-1">
+        {#each days as day}
+            <div class="text-center text-sm text-gray-500 font-semibold">{day}</div>
+        {/each}
+        {#each dates as date}
+            <div class="p-1 flex items-center justify-center">
+                {#if date}
+                    <div class="relative w-full h-full flex items-center justify-center">
+                        {#if isToday(date)}
+                            <span class="absolute inset-0 rounded-md border-2 border-red-500" />
+                        {/if}
+                        <span class="relative z-10" class:text-gray-500={isWeekend(date)}>
+                            {dayjs(date).format('D')}
+                        </span>
+                    </div>
+                {/if}
+            </div>
+        {/each}
+    </div>
+</div>

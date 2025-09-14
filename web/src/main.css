@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+    font-family:
+        'Play',
+        'Source Sans Pro',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Roboto,
+        'Helvetica Neue',
+        Arial,
+        sans-serif;
+    font-size: 12px;
+    color: white;
+}
+
+@media (max-width: 420px) {
+    html {
+        font-size: 13px;
+    }
+}
+@media (min-width: 421px) and (max-width: 1024px) {
+    html {
+        font-size: 14px;
+    }
+}
+@media (min-width: 1025px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+/* Works on Firefox */
+* {
+    scrollbar-width: 0px;
+    scrollbar-height: 0px;
+}
+
+/* Works on Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+}
+
+*::-webkit-scrollbar-thumb {
+    border: 0px;
+}
+
+a {
+    text-decoration: none;
+    color: var(--secondary);
+}
+
+button {
+    background: var(--darker);
+    color: white;
+    border: none;
+    padding: 0.3rem 0.5rem;
+}
+
+.emoji {
+    font-family: 'Noto Color Emoji', sans-serif;
+}

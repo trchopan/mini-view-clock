@@ -1,8 +1,9 @@
 import App from './App.svelte'
-import './assets/style.css'
+import './main.css'
 
-const app = new App({
-  target: document.getElementById('app')
-})
+const el = document.getElementById('app')
+if (!el) throw new Error('No #app element found')
+
+const app = new App({target: el})
 
 export default app

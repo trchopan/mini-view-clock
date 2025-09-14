@@ -2,13 +2,11 @@
     import About from './About.svelte'
     import ClockView from './ClockView.svelte'
     import MenuIcon from './MenuIcon.svelte'
-    import NoteView from './NoteView.svelte'
     import {currentView} from './store'
     import {View} from './types'
 
     const routes = [
         {component: ClockView, text: View.Clock},
-        {component: NoteView, text: View.Note},
         {component: About, text: View.About},
     ]
 
@@ -43,13 +41,15 @@
         {#if showMenu}
             <ul>
                 {#each routes as route}
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <li on:click={() => selectView(route.text)}>
-                        {route.text}
+                    <li>
+                        <button on:click={() => selectView(route.text)}>
+                            {route.text}
+                        </button>
                     </li>
                 {/each}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <li on:click={() => reload()}>Reload</li>
+                <li>
+                    <button on:click={() => reload()}>Reload</button>
+                </li>
             </ul>
         {/if}
     </nav>
