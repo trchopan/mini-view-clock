@@ -19,7 +19,6 @@
         {id: 'cardano', name: 'ADA'},
         {id: 'binancecoin', name: 'BNB'},
         {id: 'avalanche-2', name: 'AVAX'},
-        {id: 'matic-network', name: 'MATIC'},
         {id: 'solana', name: 'SOL'},
         {id: 'coti', name: 'COTI'},
         {id: 'polkadot', name: 'DOT'},
@@ -36,8 +35,6 @@
         {id: 'netflix-xstock', name: 'NFLX'},
         {id: 'mastercard-xstock', name: 'MA'},
     ]
-
-    let bitcoinChartData: {prices: [number, number][]} | null = null
 
     // State for rotating coin chart
     let currentChartIdx = 0
@@ -168,16 +165,8 @@
         }
     }
 
-    const getBitcoinChart = async () => {
-        const data = await getChart('bitcoin', 365)
-        if (data) {
-            bitcoinChartData = data
-        }
-    }
-
     onMount(async () => {
         getCoins()
-        getBitcoinChart()
         await updateCurrentChart()
         startRotation()
         getCoinsInterval = setInterval(getCoins, import.meta.env.VITE_COIN_REFRESH_INTERVAL * 1000)
