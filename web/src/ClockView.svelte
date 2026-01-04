@@ -3,8 +3,22 @@
     import {onDestroy, onMount} from 'svelte'
     import Calendar from './Calendar.svelte'
     import Clock from './Clock.svelte'
+    import Pomodoro from './Pomodoro.svelte'
     import CoinChart from './CoinChart.svelte'
     import CoinGrid from './CoinGrid.svelte'
+    import {SessionColors, SessionType} from './types'
+
+    // Toggle Clock/Pomodoro in the Clock quadrant
+    let showPomodoro = false
+
+    let pomoSessionType: SessionType | null = null
+
+    $: clockTint = (pomoSessionType && SessionColors[pomoSessionType]) || 'white'
+
+    function onPomodoroChangeSession(e: CustomEvent<{sessionType: SessionType | null}>) {
+		console.log('Pomodoro changeSession', e.detail)
+        pomoSessionType = e.detail.sessionType
+    }
 
     let coinInfo: {
         id: string
@@ -173,7 +187,6 @@
     })
 
     onDestroy(() => {
-        // Clear all intervals and rotation timer on exit
         if (rotationInterval) clearInterval(rotationInterval)
         if (getCoinsInterval) clearInterval(getCoinsInterval)
     })
@@ -181,9 +194,34 @@
 
 <div class="h-screen text-white">
     <div class="grid grid-cols-2 grid-rows-2 h-full">
-        <div class="col-span-1 row-span-1 p-1 flex items-center justify-center">
-            <Clock />
+        <!-- Clock quadrant with Clock/Pomodoro toggle -->
+        <div class="col-span-1 row-span-1 p-1 flex items-center justify-center relative">
+            <div class="absolute top-2 left-2 flex gap-2 z-10">
+                <button
+                    class="toggle-btn"
+                    class:active={!showPomodoro}
+                    on:click={() => (showPomodoro = false)}
+                >
+                    Clock
+                </button>
+                <button
+                    class="toggle-btn"
+                    class:active={showPomodoro}
+                    on:click={() => (showPomodoro = true)}
+                >
+                    Pomodoro
+                </button>
+            </div>
+
+            <div class:hidden={!showPomodoro} class="h-full w-full">
+                <Pomodoro on:changeSession={onPomodoroChangeSession} />
+            </div>
+
+            <div class:hidden={showPomodoro} class="h-full w-full">
+                <Clock color={clockTint} />
+            </div>
         </div>
+
         <div class="col-span-1 row-span-1 p-1 flex items-center justify-center">
             <Calendar />
         </div>
@@ -215,5 +253,11 @@
 <style>
     .selected {
         @apply bg-blue-600 text-white bg-gray-800 rounded;
+    }
+    .toggle-btn {
+        @apply px-3 py-1 rounded bg-gray-800 text-white text-sm;
+    }
+    .toggle-btn.active {
+        @apply bg-blue-600;
     }
 </style>

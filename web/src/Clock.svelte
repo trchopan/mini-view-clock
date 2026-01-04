@@ -2,13 +2,15 @@
     import {onDestroy, onMount} from 'svelte'
     import dayjs from 'dayjs'
 
+    export let color: string = 'white'
+
     let dateStr = ''
     let timeStr = ''
     let secondStr = ''
     let interval: number | null = null
 
     onMount(() => {
-        interval = setInterval(() => {
+        interval = window.setInterval(() => {
             const now = new Date()
             dateStr = dayjs(now).format('ddd, DD-MM-YYYY')
             timeStr = dayjs(now).format('HH:mm')
@@ -45,6 +47,7 @@
             <tspan x="-67.16" y="5.65">{dateStr}</tspan>
         </text>
     </g>
+
     <g transform="matrix(3.71 0 0 3.71 315.76 190)" style="">
         <text
             xml:space="preserve"
@@ -53,12 +56,13 @@
             font-style="normal"
             font-weight="normal"
             style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; opacity: 1; white-space: pre;"
-            style:fill="white"
+            style:fill={color}
             class="time"
         >
             <tspan x="-76.49" y="18.85">{timeStr}</tspan>
         </text>
     </g>
+
     <g transform="matrix(1.3 0 0 1.3 615 120)" style="">
         <text
             xml:space="preserve"
@@ -67,7 +71,7 @@
             font-style="normal"
             font-weight="normal"
             style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; opacity: 1; white-space: pre;"
-            style:fill="white"
+            style:fill={color}
             class="time-second"
         >
             <tspan x="-10.29" y="5.65">{secondStr}</tspan>
