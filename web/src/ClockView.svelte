@@ -16,7 +16,6 @@
     $: clockTint = (pomoSessionType && SessionColors[pomoSessionType]) || 'white'
 
     function onPomodoroChangeSession(e: CustomEvent<{sessionType: SessionType | null}>) {
-		console.log('Pomodoro changeSession', e.detail)
         pomoSessionType = e.detail.sessionType
     }
 
@@ -196,20 +195,20 @@
     <div class="grid grid-cols-2 grid-rows-2 h-full">
         <!-- Clock quadrant with Clock/Pomodoro toggle -->
         <div class="col-span-1 row-span-1 p-1 flex items-center justify-center relative">
-            <div class="absolute top-2 left-2 flex gap-2 z-10">
+            <div class="absolute top-2 left-2 flex flex-col gap-2 z-10">
                 <button
                     class="toggle-btn"
                     class:active={!showPomodoro}
                     on:click={() => (showPomodoro = false)}
                 >
-                    Clock
+                    ⏰
                 </button>
                 <button
                     class="toggle-btn"
                     class:active={showPomodoro}
                     on:click={() => (showPomodoro = true)}
                 >
-                    Pomodoro
+                    🍅
                 </button>
             </div>
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {onDestroy, onMount} from 'svelte'
     import About from './About.svelte'
     import ClockView from './ClockView.svelte'
     import MenuIcon from './MenuIcon.svelte'
@@ -24,6 +25,35 @@
     const reload = () => {
         window.location.reload()
     }
+
+    let isFullscreen = false // Declare a state variable for fullscreen
+
+    // Function to update the isFullscreen state based on document.fullscreenElement
+    const updateFullscreenState = () => {
+        isFullscreen = !!document.fullscreenElement
+    }
+
+    // Event handler for toggling fullscreen
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable fullscreen: ${err.message} (${err.name})`)
+            })
+        } else {
+            document.exitFullscreen()
+        }
+    }
+
+    // Listen for fullscreenchange events
+    onMount(() => {
+        document.addEventListener('fullscreenchange', updateFullscreenState)
+        // Initialize state
+        updateFullscreenState()
+    })
+
+    onDestroy(() => {
+        document.removeEventListener('fullscreenchange', updateFullscreenState)
+    })
 </script>
 
 <main>
@@ -49,6 +79,12 @@
                 {/each}
                 <li>
                     <button on:click={() => reload()}>Reload</button>
+                </li>
+
+                <li>
+                    <button on:click={() => toggleFullscreen()}>
+                        {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                    </button>
                 </li>
             </ul>
         {/if}
