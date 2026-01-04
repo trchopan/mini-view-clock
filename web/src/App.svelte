@@ -67,7 +67,7 @@
     nav {
         position: fixed;
         top: 0.1rem;
-        left: 0.1rem;
+        right: 0.1rem;
     }
     ul {
         padding: 0.5rem;
