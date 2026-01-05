@@ -195,7 +195,7 @@
     <div class="grid grid-cols-2 grid-rows-2 h-full">
         <!-- Clock quadrant with Clock/Pomodoro toggle -->
         <div class="col-span-1 row-span-1 p-1 flex items-center justify-center relative">
-            <div class="absolute top-2 left-2 flex flex-col gap-2 z-10">
+            <div class="absolute top-2 left-2 flex gap-2 z-10">
                 <button
                     class="toggle-btn"
                     class:active={!showPomodoro}
@@ -254,7 +254,7 @@
         @apply bg-blue-600 text-white bg-gray-800 rounded;
     }
     .toggle-btn {
-        @apply px-3 py-1 rounded bg-gray-800 text-white text-sm;
+        @apply px-2 py-1 rounded bg-gray-800 text-white text-xs;
     }
     .toggle-btn.active {
         @apply bg-blue-600;

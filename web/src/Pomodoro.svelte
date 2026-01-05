@@ -201,59 +201,63 @@
     onDestroy(pause)
 </script>
 
-<div class="h-full w-full flex flex-col items-center justify-center gap-2 select-none">
-    <div class="text-base font-bold" style="color: {SessionColors[sessionType]}">
-        {sessionType}
-    </div>
+<div class="h-full w-full flex items-center justify-center select-none">
+    <!-- Main content + right rail container -->
+    <div class="w-full max-w-xl flex items-center justify-center gap-6">
+        <!-- Main (timer + counters) -->
+        <div class="flex flex-col items-center justify-center gap-2 flex-1">
+            <div class="text-base font-bold" style="color: {SessionColors[sessionType]}">
+                {sessionType}
+            </div>
 
-    <div class="text-6xl font-mono leading-none text-white">
-        {formatMMSS(remainingSeconds)}
-    </div>
-
-    <!-- Counters -->
-    <div class="grid grid-cols-3 gap-x-6 gap-y-1 text-sm text-gray-300 mt-2">
-        <div>Work: <span class="text-white">{workCount}</span></div>
-        <div>Short: <span class="text-white">{shortCount}</span></div>
-        <div>Long: <span class="text-white">{longCount}</span></div>
-    </div>
-
-    <div class="flex gap-2 mt-2">
-        <button
-            class={`px-2 py-0.5 rounded transition-colors duration-200 ${
-                running ? 'bg-gray-500' : 'bg-gray-800 hover:bg-gray-700'
-            }`}
-            on:click={() => (running ? pause() : start())}
-            type="button"
-        >
-            {running ? 'Pause' : 'Start'}
-        </button>
-        <button
-            class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700"
-            on:click={reset}
-            type="button"
-        >
-            Reset
-        </button>
-        <button
-            class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700"
-            on:click={skip}
-            type="button"
-        >
-            Skip
-        </button>
-    </div>
-
-    <div class="flex gap-2 mt-1">
-        {#each sessionOpts as item}
-            <button
-                class={`px-2 py-0.5 rounded transition-colors duration-200 ${
-                    sessionType === item ? 'bg-gray-500' : 'bg-gray-800 hover:bg-gray-700'
-                }`}
-                on:click={() => setSession(item)}
-                type="button"
+            <div
+                class="font-mono leading-none text-white w-full text-center"
+                style="font-size: clamp(2.5rem, 10vw, 7rem);"
             >
-                {item}
-            </button>
-        {/each}
+                {formatMMSS(remainingSeconds)}
+            </div>
+
+            <!-- Counters -->
+            <div class="grid grid-cols-3 gap-x-6 gap-y-1 text-sm text-gray-300 mt-2">
+                <div>Work: <span class="text-white">{workCount}</span></div>
+                <div>Short: <span class="text-white">{shortCount}</span></div>
+                <div>Long: <span class="text-white">{longCount}</span></div>
+            </div>
+        </div>
+
+        <!-- Right rail (buttons column) -->
+        <div class="w-32 grid grid-cols-2 gap-1 auto-rows-min">
+            <div class="flex flex-col gap-1">
+                {#each sessionOpts as item}
+                    <button
+                        class={`pomo-btn ${sessionType === item && '!bg-gray-500'}`}
+                        on:click={() => setSession(item)}
+                        type="button"
+                    >
+                        {item}
+                    </button>
+                {/each}
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <button
+                    class={`pomo-btn ${running && '!bg-gray-500'}`}
+                    on:click={() => (running ? pause() : start())}
+                    type="button"
+                >
+                    {running ? 'Pause' : 'Start'}
+                </button>
+
+                <button class="pomo-btn" on:click={reset} type="button"> Reset </button>
+
+                <button class="pomo-btn" on:click={skip} type="button"> Skip </button>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+    .pomo-btn {
+        @apply w-full px-2 py-1 rounded bg-gray-800 text-sm;
+    }
+</style>
