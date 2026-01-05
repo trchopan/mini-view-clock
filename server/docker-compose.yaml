@@ -1,0 +1,25 @@
+services:
+    sync-server:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: mini-view-sync
+        restart: unless-stopped
+        environment:
+            PORT: '8787'
+            SQLITE_PATH: '/data/sync.db'
+        volumes:
+            - ./data:/data
+        ports:
+            - '8580:8787'
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'bun',
+                    '-e',
+                    "fetch('http://127.0.0.1:8787/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+                ]
+            interval: 10s
+            timeout: 3s
+            retries: 10

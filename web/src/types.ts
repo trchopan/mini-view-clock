@@ -1,8 +1,7 @@
 export enum View {
     Clock = 'Clock',
-    Note = 'Note',
     About = 'About',
-    HandGesture = 'HandGesture',
+    Sync = 'Sync',
 }
 
 export enum SessionType {

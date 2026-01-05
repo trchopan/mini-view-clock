@@ -2,12 +2,15 @@
     import {onDestroy, onMount} from 'svelte'
     import About from './About.svelte'
     import ClockView from './ClockView.svelte'
+    import SyncJoin from './SyncJoin.svelte'
     import MenuIcon from './MenuIcon.svelte'
-    import {currentView} from './store'
     import {View} from './types'
+    import {syncRoomId, syncEnabled} from './sync/store'
+    import {currentView} from './store'
 
     const routes = [
         {component: ClockView, text: View.Clock},
+        {component: SyncJoin, text: View.Sync},
         {component: About, text: View.About},
     ]
 
@@ -49,6 +52,17 @@
         document.addEventListener('fullscreenchange', updateFullscreenState)
         // Initialize state
         updateFullscreenState()
+
+        // Detect /sync/:id
+        const path = window.location.pathname || '/'
+		const m = path.match(/^\/sync\/([0-9]{8})\/?$/)
+        if (m) {
+            syncRoomId.set(m[1])
+            syncEnabled.set(true)
+            currentView.set(View.Clock)
+            // optionally hide menu in sync mode by default:
+            showMenu = false
+        }
     })
 
     onDestroy(() => {

@@ -7,9 +7,17 @@
     import CoinChart from './CoinChart.svelte'
     import CoinGrid from './CoinGrid.svelte'
     import {SessionColors, SessionType} from './types'
+    import {syncEnabled} from './sync/store'
+    import {roomState, sendAction, serverOffsetMs} from './sync/syncClient'
+    import type {SyncedRoomState} from './sync/types'
 
     // Toggle Clock/Pomodoro in the Clock quadrant
-    let showPomodoro = false
+    let localShowPomodoro = false
+
+    $: synced = $syncEnabled
+    $: syncedState = $roomState as SyncedRoomState | null
+
+    $: showPomodoro = synced ? !!syncedState?.showPomodoro : localShowPomodoro
 
     let pomoSessionType: SessionType | null = null
 
@@ -50,21 +58,42 @@
     ]
 
     // State for rotating coin chart
-    let currentChartIdx = 0
+    let localChartIdx = 0
+    let localTimeframeDays: number = 365
+
+    $: currentChartIdx = synced ? syncedState?.currentChartIdx ?? 0 : localChartIdx
+    $: timeframeDays = synced ? syncedState?.timeframeDays ?? 365 : localTimeframeDays
+    $: if (synced && syncedState) {
+        ;(async () => {
+            const idx = syncedState.currentChartIdx ?? 0
+            const days = syncedState.timeframeDays ?? 365
+            const coin = coins[idx]
+            if (!coin) return
+            currentChartName = coin.name
+            const data = await getChart(coin.id, days)
+            currentChartData = data ? data : null
+        })()
+    }
+
     let currentChartData: {prices: [number, number][]} | null = null
     let currentChartName: string = coins[0].name
-    let timeframeDays: number = 365
+
     let getCoinsInterval: any = null
     let rotationInterval: any = null
 
     function setTimeframe(days: number) {
-        timeframeDays = days
+        if (synced) {
+            sendAction({type: 'SET_TIMEFRAME_DAYS', value: days})
+            return
+        }
+        localTimeframeDays = days
         updateCurrentChart()
     }
 
     function startRotation() {
+        if (synced) return
         rotationInterval = setInterval(async () => {
-            const nextIdx = (currentChartIdx + 1) % coins.length
+            const nextIdx = (localChartIdx + 1) % coins.length
             await updateCurrentChart(nextIdx)
         }, 60 * 1000)
     }
@@ -77,18 +106,22 @@
     }
 
     async function updateCurrentChart(idx?: number) {
+        if (synced) {
+            if (idx !== undefined) {
+                sendAction({type: 'SET_CHART_IDX', value: idx})
+            }
+            return
+        }
+
         if (idx !== undefined) {
-            currentChartIdx = idx
+            localChartIdx = idx
             resetRotation()
         }
-        const coin = coins[currentChartIdx]
+
+        const coin = coins[localChartIdx]
         currentChartName = coin.name
-        const data = await getChart(coin.id, timeframeDays)
-        if (data) {
-            currentChartData = data
-        } else {
-            currentChartData = null
-        }
+        const data = await getChart(coin.id, localTimeframeDays)
+        currentChartData = data ? data : null
     }
 
     const fetchCoins = async () => {
@@ -181,7 +214,9 @@
     onMount(async () => {
         getCoins()
         await updateCurrentChart()
-        startRotation()
+
+        if (!synced) startRotation()
+
         getCoinsInterval = setInterval(getCoins, import.meta.env.VITE_COIN_REFRESH_INTERVAL * 1000)
     })
 
@@ -192,28 +227,41 @@
 </script>
 
 <div class="h-screen text-white">
-    <div class="grid grid-cols-2 grid-rows-2 h-full">
+    <div class="grid grid-cols-1 sm:grid-cols-2 sm:gap-0 h-full">
         <!-- Clock quadrant with Clock/Pomodoro toggle -->
         <div class="col-span-1 row-span-1 p-1 flex items-center justify-center relative">
             <div class="absolute top-2 left-2 flex gap-2 z-10">
                 <button
                     class="toggle-btn"
                     class:active={!showPomodoro}
-                    on:click={() => (showPomodoro = false)}
+                    on:click={() => {
+                        if (synced) sendAction({type: 'SET_SHOW_POMODORO', value: false})
+                        else localShowPomodoro = false
+                    }}
                 >
                     ⏰
                 </button>
+
                 <button
                     class="toggle-btn"
                     class:active={showPomodoro}
-                    on:click={() => (showPomodoro = true)}
+                    on:click={() => {
+                        if (synced) sendAction({type: 'SET_SHOW_POMODORO', value: true})
+                        else localShowPomodoro = true
+                    }}
                 >
                     🍅
                 </button>
             </div>
 
             <div class:hidden={!showPomodoro} class="h-full w-full">
-                <Pomodoro on:changeSession={onPomodoroChangeSession} />
+                <Pomodoro
+                    on:changeSession={onPomodoroChangeSession}
+                    {synced}
+                    syncState={syncedState?.pomodoro}
+                    serverOffsetMs={$serverOffsetMs}
+                    {sendAction}
+                />
             </div>
 
             <div class:hidden={showPomodoro} class="h-full w-full">
