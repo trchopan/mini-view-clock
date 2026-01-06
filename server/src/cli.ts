@@ -7,7 +7,7 @@ const [, , cmd, ...args] = process.argv;
 function usage() {
     console.log(`
 Usage:
-  bun run cli.ts rooms:add
+  bun run cli.ts rooms:add [id]
   bun run cli.ts rooms:remove <id>
   bun run cli.ts rooms:list
 `);
@@ -19,15 +19,26 @@ if (!cmd) {
 }
 
 if (cmd === 'rooms:add') {
-    function generateRoomId(): string {
-        return Math.floor(10000000 + Math.random() * 90000000).toString();
-    }
+    let id: string;
+    const providedId = args[0];
 
-    let id = generateRoomId();
+    if (providedId) {
+        id = providedId;
+        if (db.query('SELECT id FROM rooms WHERE id = ?').get(id)) {
+            console.error(`Error: Room with ID '${id}' already exists.`);
+            process.exit(1);
+        }
+    } else {
+        function generateRoomId(): string {
+            return Math.floor(10000000 + Math.random() * 90000000).toString();
+        }
 
-    // ensure uniqueness
-    while (db.query('SELECT id FROM rooms WHERE id = ?').get(id)) {
         id = generateRoomId();
+
+        // ensure uniqueness
+        while (db.query('SELECT id FROM rooms WHERE id = ?').get(id)) {
+            id = generateRoomId();
+        }
     }
 
     db.query('INSERT INTO rooms (id, created_at, enabled) VALUES (?, ?, 1)').run(id, Date.now());
