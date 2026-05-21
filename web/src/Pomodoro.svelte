@@ -2,29 +2,6 @@
     import {createEventDispatcher, onDestroy, onMount} from 'svelte'
     import {SessionColors, SessionType} from './types'
 
-    // Sync props
-    export let synced: boolean = false
-    export let syncState: {
-        sessionType: SessionType
-        mode: 'idle' | 'running' | 'paused'
-        durationSec: number
-        startedAtMs: number | null
-        pausedAtMs: number | null
-        elapsedBeforePauseMs: number
-        workSessionsCompleted: number
-        workCount: number
-        shortCount: number
-        longCount: number
-        config: {
-            workSec: number
-            shortSec: number
-            longSec: number
-            longBreakEvery: number
-        }
-    } | null = null
-    export let serverOffsetMs: number = 0
-    export let sendAction: (action: any) => void = () => {}
-
     const sessionOpts = [SessionType.Work, SessionType.Short, SessionType.Long]
 
     const dispatch = createEventDispatcher<{
@@ -54,21 +31,6 @@
     let shortCount = 0
     let longCount = 0
 
-    /* -------------------- Derived / Sync display -------------------- */
-
-    let displayRemainingSeconds = remainingSeconds
-    let displaySessionType: SessionType = sessionType
-    let displayWorkCount = workCount
-    let displayShortCount = shortCount
-    let displayLongCount = longCount
-    let displayRunning = running
-
-    $: activeColor = SessionColors[displaySessionType]
-
-    function effectiveServerNowMs() {
-        return Date.now() + (serverOffsetMs || 0)
-    }
-
     function secondsForLocal(type: SessionType) {
         if (type === SessionType.Work) return WORK_SECONDS
         if (type === SessionType.Short) return SHORT_BREAK_SECONDS
@@ -79,33 +41,6 @@
         const m = Math.floor(totalSeconds / 60)
         const s = totalSeconds % 60
         return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-    }
-
-    function computeSyncedRemainingSeconds() {
-        if (!syncState) return 0
-        const p = syncState
-        const now = effectiveServerNowMs()
-
-        // elapsedMs
-        let elapsedMs = 0
-        if (p.mode === 'idle') {
-            elapsedMs = 0
-        } else if (!p.startedAtMs) {
-            elapsedMs = 0
-        } else if (p.mode === 'running') {
-            elapsedMs = now - p.startedAtMs + (p.elapsedBeforePauseMs || 0)
-        } else {
-            // paused
-            if (p.pausedAtMs) {
-                elapsedMs = p.pausedAtMs - p.startedAtMs + (p.elapsedBeforePauseMs || 0)
-            } else {
-                elapsedMs = p.elapsedBeforePauseMs || 0
-            }
-        }
-
-        const remainingMs = p.durationSec * 1000 - elapsedMs
-        const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000))
-        return remainingSec
     }
 
     /* -------------------- Local persistence -------------------- */
@@ -251,86 +186,35 @@
         finishSession()
     }
 
-    /* -------------------- Synced actions -------------------- */
-
-    function syncedStartPauseToggle() {
-        if (!syncState) return
-        if (syncState.mode === 'running') sendAction({type: 'POMO_PAUSE'})
-        else if (syncState.mode === 'paused') sendAction({type: 'POMO_RESUME'})
-        else sendAction({type: 'POMO_START'})
-    }
-
-    function syncedReset() {
-        sendAction({type: 'POMO_RESET'})
-    }
-
-    function syncedSkip() {
-        sendAction({type: 'POMO_SKIP'})
-    }
-
-    function syncedSetSession(type: SessionType) {
-        sendAction({type: 'POMO_SET_SESSION', sessionType: type})
-    }
-
     /* -------------------- Lifecycle -------------------- */
 
-    // In sync mode, do NOT restore local storage. Just run a lightweight render tick.
-    let renderTick: number | null = null
-
     onMount(() => {
-        if (!synced) {
-            restoreState()
-        }
-
-        renderTick = window.setInterval(() => {
-            if (synced) {
-                if (!syncState) return
-                displaySessionType = syncState.sessionType
-                displayRemainingSeconds = computeSyncedRemainingSeconds()
-                displayWorkCount = syncState.workCount
-                displayShortCount = syncState.shortCount
-                displayLongCount = syncState.longCount
-                displayRunning = syncState.mode === 'running'
-
-                // clock tint behavior: sessionType only while running
-                dispatch('changeSession', {
-                    sessionType: syncState.mode === 'running' ? syncState.sessionType : null,
-                })
-            } else {
-                displaySessionType = sessionType
-                displayRemainingSeconds = remainingSeconds
-                displayWorkCount = workCount
-                displayShortCount = shortCount
-                displayLongCount = longCount
-                displayRunning = running
-            }
-        }, 250)
+        restoreState()
     })
 
     onDestroy(() => {
-        if (!synced) pause()
-        if (renderTick) clearInterval(renderTick)
+        pause()
     })
 </script>
 
 <div class="h-full w-full flex items-center justify-center select-none">
     <div class="w-full max-w-xl flex items-center justify-center gap-6">
         <div class="flex flex-col items-center justify-center gap-2 flex-1">
-            <div class="text-base font-bold" style="color: {SessionColors[displaySessionType]}">
-                {displaySessionType}
+            <div class="text-base font-bold" style="color: {SessionColors[sessionType]}">
+                {sessionType}
             </div>
 
             <div
                 class="font-mono leading-none text-white w-full text-center"
                 style="font-size: clamp(2.5rem, 10vw, 7rem);"
             >
-                {formatMMSS(displayRemainingSeconds)}
+                {formatMMSS(remainingSeconds)}
             </div>
 
             <div class="grid grid-cols-3 gap-x-6 gap-y-1 text-sm text-gray-300 mt-2">
-                <div>Work: <span class="text-white">{displayWorkCount}</span></div>
-                <div>Short: <span class="text-white">{displayShortCount}</span></div>
-                <div>Long: <span class="text-white">{displayLongCount}</span></div>
+                <div>Work: <span class="text-white">{workCount}</span></div>
+                <div>Short: <span class="text-white">{shortCount}</span></div>
+                <div>Long: <span class="text-white">{longCount}</span></div>
             </div>
         </div>
 
@@ -338,8 +222,8 @@
             <div class="flex flex-col gap-1">
                 {#each sessionOpts as item}
                     <button
-                        class={`pomo-btn ${displaySessionType === item && '!bg-gray-500'}`}
-                        on:click={() => (synced ? syncedSetSession(item) : setSession(item))}
+                        class={`pomo-btn ${sessionType === item && '!bg-gray-500'}`}
+                        on:click={() => setSession(item)}
                         type="button"
                     >
                         {item}
@@ -349,25 +233,16 @@
 
             <div class="flex flex-col gap-1">
                 <button
-                    class={`pomo-btn ${displayRunning && '!bg-gray-500'}`}
-                    on:click={() =>
-                        synced ? syncedStartPauseToggle() : running ? pause() : start()}
+                    class={`pomo-btn ${running && '!bg-gray-500'}`}
+                    on:click={() => (running ? pause() : start())}
                     type="button"
                 >
-                    {synced
-                        ? syncState?.mode === 'running'
-                            ? 'Pause'
-                            : syncState?.mode === 'paused'
-                              ? 'Resume'
-                              : 'Start'
-                        : running
-                          ? 'Pause'
-                          : 'Start'}
+                    {running ? 'Pause' : 'Start'}
                 </button>
 
                 <button
                     class="pomo-btn"
-                    on:click={() => (synced ? syncedReset() : reset())}
+                    on:click={() => reset()}
                     type="button"
                 >
                     Reset
@@ -375,7 +250,7 @@
 
                 <button
                     class="pomo-btn"
-                    on:click={() => (synced ? syncedSkip() : skip())}
+                    on:click={() => skip()}
                     type="button"
                 >
                     Skip

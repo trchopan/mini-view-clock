@@ -7,17 +7,10 @@
     import CoinChart from './CoinChart.svelte'
     import CoinGrid from './CoinGrid.svelte'
     import {SessionColors, SessionType} from './types'
-    import {syncEnabled} from './sync/store'
-    import {roomState, sendAction, serverOffsetMs} from './sync/syncClient'
-    import type {SyncedRoomState} from './sync/types'
 
     // Toggle Clock/Pomodoro in the Clock quadrant
     let localShowPomodoro = false
-
-    $: synced = $syncEnabled
-    $: syncedState = $roomState as SyncedRoomState | null
-
-    $: showPomodoro = synced ? !!syncedState?.showPomodoro : localShowPomodoro
+    $: showPomodoro = localShowPomodoro
 
     let pomoSessionType: SessionType | null = null
 
@@ -61,19 +54,8 @@
     let localChartIdx = 0
     let localTimeframeDays: number = 365
 
-    $: currentChartIdx = synced ? syncedState?.currentChartIdx ?? 0 : localChartIdx
-    $: timeframeDays = synced ? syncedState?.timeframeDays ?? 365 : localTimeframeDays
-    $: if (synced && syncedState) {
-        ;(async () => {
-            const idx = syncedState.currentChartIdx ?? 0
-            const days = syncedState.timeframeDays ?? 365
-            const coin = coins[idx]
-            if (!coin) return
-            currentChartName = coin.name
-            const data = await getChart(coin.id, days)
-            currentChartData = data ? data : null
-        })()
-    }
+    $: currentChartIdx = localChartIdx
+    $: timeframeDays = localTimeframeDays
 
     let currentChartData: {prices: [number, number][]} | null = null
     let currentChartName: string = coins[0].name
@@ -82,16 +64,11 @@
     let rotationInterval: any = null
 
     function setTimeframe(days: number) {
-        if (synced) {
-            sendAction({type: 'SET_TIMEFRAME_DAYS', value: days})
-            return
-        }
         localTimeframeDays = days
         updateCurrentChart()
     }
 
     function startRotation() {
-        if (synced) return
         rotationInterval = setInterval(async () => {
             const nextIdx = (localChartIdx + 1) % coins.length
             await updateCurrentChart(nextIdx)
@@ -106,13 +83,6 @@
     }
 
     async function updateCurrentChart(idx?: number) {
-        if (synced) {
-            if (idx !== undefined) {
-                sendAction({type: 'SET_CHART_IDX', value: idx})
-            }
-            return
-        }
-
         if (idx !== undefined) {
             localChartIdx = idx
             resetRotation()
@@ -163,6 +133,7 @@
             }
             localStorage.setItem('cachedCoins', JSON.stringify(cachedCoins))
         }
+
         coinInfo = coins
             .map(coin => ({...coin, ...data[coin.id]}))
             .filter(coin => {
@@ -214,8 +185,7 @@
     onMount(async () => {
         getCoins()
         await updateCurrentChart()
-
-        if (!synced) startRotation()
+        startRotation()
 
         getCoinsInterval = setInterval(getCoins, import.meta.env.VITE_COIN_REFRESH_INTERVAL * 1000)
     })
@@ -235,8 +205,7 @@
                     class="toggle-btn"
                     class:active={!showPomodoro}
                     on:click={() => {
-                        if (synced) sendAction({type: 'SET_SHOW_POMODORO', value: false})
-                        else localShowPomodoro = false
+                        localShowPomodoro = false
                     }}
                 >
                     ⏰
@@ -246,8 +215,7 @@
                     class="toggle-btn"
                     class:active={showPomodoro}
                     on:click={() => {
-                        if (synced) sendAction({type: 'SET_SHOW_POMODORO', value: true})
-                        else localShowPomodoro = true
+                        localShowPomodoro = true
                     }}
                 >
                     🍅
@@ -255,13 +223,7 @@
             </div>
 
             <div class:hidden={!showPomodoro} class="h-full w-full">
-                <Pomodoro
-                    on:changeSession={onPomodoroChangeSession}
-                    {synced}
-                    syncState={syncedState?.pomodoro}
-                    serverOffsetMs={$serverOffsetMs}
-                    {sendAction}
-                />
+                <Pomodoro on:changeSession={onPomodoroChangeSession} />
             </div>
 
             <div class:hidden={showPomodoro} class="h-full w-full">
