@@ -22,6 +22,7 @@ export function fmtNumber(p: number | string, precisionLen: number = 5) {
     return `${thousandComma(whole)}.${decimal.slice(0, decimalLen)}`
 }
 
-export function fmtPercent(p: number) {
+export function fmtPercent(p: number | null | undefined) {
+    if (!Number.isFinite(p)) return '--'
     return p.toFixed(2) + '%'
 }

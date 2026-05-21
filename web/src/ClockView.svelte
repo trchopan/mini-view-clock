@@ -21,11 +21,18 @@
     }
 
     let coinInfo: {
+        originalIdx: number
         id: string
         name: string
         usd: number
-        usd_24h_change: number
+        usd_24h_change: number | null
     }[] = []
+
+    type CoinQuote = {
+        usd?: number | null
+        usd_24h_change?: number | null
+    }
+    type CoinQuoteMap = Record<string, CoinQuote>
 
     const coins = [
         {id: 'bitcoin', name: 'BTC'},
@@ -98,9 +105,7 @@
         try {
             const ids = coins.map(c => c.id).join(',')
             console.log('👉 name', ids)
-            const {data} = await axios.get<
-                {[key: string]: {usd: number; usd_24h_change: number}}[]
-            >(
+            const {data} = await axios.get<CoinQuoteMap>(
                 `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`
             )
             return data
@@ -111,13 +116,13 @@
     }
 
     const getCoins = async () => {
-        let data = (() => {
+        let data: CoinQuoteMap | null = (() => {
             try {
                 const cachedCoinsRaw = localStorage.getItem('cachedCoins')
                 if (!cachedCoinsRaw) return null
                 const cachedCoins = JSON.parse(cachedCoinsRaw)
                 if (cachedCoins.expire > new Date().getTime()) {
-                    return cachedCoins.data
+                    return cachedCoins.data as CoinQuoteMap
                 } else {
                     return null
                 }
@@ -134,16 +139,39 @@
             localStorage.setItem('cachedCoins', JSON.stringify(cachedCoins))
         }
 
+        if (!data || typeof data !== 'object') {
+            coinInfo = []
+            return
+        }
+
         coinInfo = coins
-            .map(coin => ({...coin, ...data[coin.id]}))
-            .filter(coin => {
-                if (Boolean(coin.usd)) {
-                    return true
-                } else {
-                    console.error('Missing data for coin', coin)
-                    return false
+            .map((coin, originalIdx) => {
+                const quote = data?.[coin.id]
+                if (!quote || !Number.isFinite(quote.usd)) {
+                    console.error('Missing USD data for coin', coin.id, quote)
+                    return null
+                }
+
+                return {
+                    ...coin,
+                    originalIdx,
+                    usd: Number(quote.usd),
+                    usd_24h_change: Number.isFinite(quote.usd_24h_change)
+                        ? Number(quote.usd_24h_change)
+                        : null,
                 }
             })
+            .filter(
+                (
+                    coin
+                ): coin is {
+                    originalIdx: number
+                    id: string
+                    name: string
+                    usd: number
+                    usd_24h_change: number | null
+                } => coin !== null
+            )
     }
 
     const getChart = async (coinId: string, days: number) => {
