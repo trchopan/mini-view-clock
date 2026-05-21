@@ -1,3 +1,3 @@
 cd web
-npm run build && firebase deploy --only hosting
+bun run build && firebase deploy --only hosting
 cd -
